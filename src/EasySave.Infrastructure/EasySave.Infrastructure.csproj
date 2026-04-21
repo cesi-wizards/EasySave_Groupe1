@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <AssemblyName>EasySave.Infrastructure</AssemblyName>
+        <RootNamespace>EasySave.Infrastructure</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\EasyLog\EasyLog.csproj" />
+        <ProjectReference Include="..\..\src\EasySave.Domain\EasySave.Domain.csproj" />
+    </ItemGroup>
+</Project>

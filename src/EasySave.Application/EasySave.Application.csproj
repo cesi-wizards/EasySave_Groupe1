@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <AssemblyName>EasySave.Application</AssemblyName>
+        <RootNamespace>EasySave.Application</RootNamespace>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\EasySave.Domain\EasySave.Domain.csproj" />
+        <ProjectReference Include="..\..\src\EasySave.Infrastructure\EasySave.Infrastructure.csproj" />
+    </ItemGroup>
+</Project>
