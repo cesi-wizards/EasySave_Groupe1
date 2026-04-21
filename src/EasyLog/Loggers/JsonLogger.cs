@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using EasyLog.Interfaces;
 
 namespace EasyLog.Loggers;
 
@@ -23,7 +24,7 @@ public class JsonLogger : ILogger
                 // waiting for the mitex to get freed (5 seconds of timeout)
                 if (mutex.WaitOne(TimeSpan.FromSeconds(5)))
                 {
-                    CreateFile(filepath);
+                    EnsureDirectoryExists(filepath);
                     string JsonFilePath = FilePathToJsonPath(filepath);
                     string JsonContent = ContentToJSON(content);
                     File.AppendAllText(JsonFilePath, JsonContent + Environment.NewLine);
@@ -80,7 +81,13 @@ public class JsonLogger : ILogger
         }
 
         // If we get here, the string wasn't serialazed yet
-        return JsonSerializer.Serialize(content);
+        var logObject = new
+        {
+            timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+            content = content
+        };
+
+        return JsonSerializer.Serialize(logObject);
     }
 
     /// <summary>

@@ -1,3 +1,6 @@
+using EasyLog.Interfaces;
+using EasyLog.Loggers;
+
 namespace EasyLog;
 
 public class EasyLog
