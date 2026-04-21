@@ -1,6 +1,6 @@
-namespace DefaultNamespace;
+namespace EasyLog.Loggers;
 
 public class JsonLogger
 {
-    
+
 }

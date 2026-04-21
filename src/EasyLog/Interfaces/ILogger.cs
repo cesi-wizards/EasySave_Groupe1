@@ -1,6 +1,6 @@
-namespace DefaultNamespace;
+namespace EasyLog.Interfaces;
 
 public interface ILogger
 {
-    
+
 }

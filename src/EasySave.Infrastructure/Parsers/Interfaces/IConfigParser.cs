@@ -1,6 +1,6 @@
-namespace DefaultNamespace;
+namespace EasySave.Infrastructure.Parsers.Interfaces;
 
 public interface IConfigParser
 {
-    
+
 }
