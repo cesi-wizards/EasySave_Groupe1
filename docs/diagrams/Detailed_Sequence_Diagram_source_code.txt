@@ -1,0 +1,155 @@
+@startuml
+
+' Title of the diagram
+title Detailed Sequence diagram EasyLog V1.0 Scenario : Execute FullBackup jobs k to n (k <= n) 
+
+' Participant and actors
+
+actor User
+
+participant Program
+
+participant MainViewModel
+
+participant JsonParser
+
+participant JobManager
+
+participant FullBackupFactory
+
+participant BackupJob
+
+participant FullBackupStrategy
+
+participant StateTracker
+
+participant DailyLogger
+
+
+' Startup
+
+User -> Program : "EasySave.exe k-n"
+
+activate Program
+
+activate MainViewModel 
+
+Program -> MainViewModel : "run(args)"
+
+' JsonParser -> Parsing of the config files
+MainViewModel -> JsonParser : Parse(filepath) informations
+activate JsonParser
+JsonParser --> MainViewModel : Config
+deactivate JsonParser
+
+' Creation of the desired Jobs
+
+loop For i in range(k,n, i++)
+
+MainViewModel -> MainViewModel : CreateBackupConfig(Config)
+
+MainViewModel -> JobManager : AddJob(BackupConfig)
+
+JobManager -> FullBackupFactory : CreateJob()
+activate FullBackupFactory
+
+FullBackupFactory --> JobManager : return BackupJob
+deactivate FullBackupFactory
+end
+
+' Execution de l'ensemble des jobs de lqa liste
+MainViewModel -> JobManager : ExecuteJobs()
+activate JobManager
+
+loop For i in range(k,n, i++)
+
+JobManager -> BackupJob : Execute()
+activate BackupJob
+BackupJob -> FullBackupStrategy : Execute()
+deactivate BackupJob
+
+activate FullBackupStrategy
+
+
+    ' Directory creation gestion (need to be logged)
+    loop For each Directory within source repository and subsequent repositories
+    
+        
+        
+        FullBackupStrategy -> StateTracker : Notify(Context) (source filepath ending with "/")
+        activate StateTracker
+        FullBackupStrategy -> DailyLogger : Notify(Context) (source filepath ending with "/")
+        activate DailyLogger
+        
+        StateTracker -> StateTracker : ignore notification (soure filepath implies a repository)
+        
+        ' Log action
+        group Log logic using the dll librairy
+            DailyLogger -> EasyLog : WriteJson(filepath, content)
+            
+            activate EasyLog
+            
+            EasyLog -> JsonLogger : Write(filepath, content)
+            
+            
+        end
+        deactivate EasyLog
+    end
+    
+    deactivate DailyLogger
+    deactivate StateTracker
+
+    loop For each file within source repository and subsequent repositories
+        
+        ' Notification of subscribed (start of task, only StateTracker does stuff)
+        
+        FullBackupStrategy -> DailyLogger : Notity(Context) (negative transfer in Context)
+        
+        activate DailyLogger
+        
+        DailyLogger -> DailyLogger : Ignore notification (du to negative transfer in Context)
+        
+        FullBackupStrategy -> StateTracker : Notify(Context) (negative transfer in Context)
+        
+        activate StateTracker
+        
+        StateTracker -> StateTracker : WriteToFile()
+        
+        FullBackupStrategy -> FullBackupStrategy : copy file in tartget path
+        
+        ' Notification of subscribed (after task)
+        
+        FullBackupStrategy -> DailyLogger : Notity(Context)
+        
+        FullBackupStrategy -> StateTracker : Notify(Context)
+        
+        ' Log action
+        group Log logic using the dll librairy
+        
+            DailyLogger -> EasyLog : WriteJson(filepath, content)
+            
+            activate EasyLog
+            
+            EasyLog -> JsonLogger : Write(filepath, content)
+        end
+        deactivate EasyLog
+        
+        StateTracker -> StateTracker : WriteToFile(content)
+    end
+    
+    deactivate DailyLogger
+    deactivate StateTracker
+    
+    FullBackupStrategy -> JobManager : Job i ended
+    deactivate FullBackupStrategy
+end
+
+JobManager -> MainViewModel : Jobs ended
+
+deactivate JobManager
+
+MainViewModel -> Program : End of program
+
+deactivate MainViewModel
+deactivate Program
+@enduml
