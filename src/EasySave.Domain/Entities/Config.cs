@@ -1,18 +1,18 @@
 namespace EasySave.Domain.Entities;
 
-public class Context
+public class Config
 {
-    // Attributs of the job's configs
+    // Attributs
     public string SaveName { get; } = string.Empty;
-    public string SourceRepository { get; } = string.Empty;
-    public string TargetRepository { get; } = string.Empty;
+    public string SourceFolder { get; } = string.Empty;
+    public string TargetFolder { get; } = string.Empty;
 
     // Constructors
     public Config() { }
-    public Config(string saveName, string sourceRepository, string targetRepository)
+    public Config(string saveName, string sourceFolder, string targetFolder)
     {
         SaveName = saveName;
-        SourceRepository = sourceRepository;
-        TargetRepository = targetRepository;
+        SourceFolder = sourceFolder;
+        TargetFolder = targetFolder;
     }
 }
