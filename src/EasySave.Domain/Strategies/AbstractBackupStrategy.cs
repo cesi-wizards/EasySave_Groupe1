@@ -1,3 +1,4 @@
+using EasySave.Domain.Entities;
 using EasySave.Domain.Interfaces;
 
 namespace EasySave.Domain.Strategies;
@@ -5,13 +6,27 @@ namespace EasySave.Domain.Strategies;
 public abstract class AbstractBackupStrategy : IBackupStrategy
 {
     public List<ISubscriber> Subscribers { get; set; } = [];
-    public abstract void Execute(string sourcePath, string targetPath);
+    protected void Notify(Context context) // protected to prevent external classes from triggering notifications directly
+    {
+        foreach (var subscriber in Subscribers)
+        {
+            subscriber.Update(context);
+        }
+    }
     public void Attach(ISubscriber subscriber)
     {
-        // Implementation of attaching a subscriber
+        if (subscriber == null)
+            throw new ArgumentNullException(nameof(subscriber));
+        if (!Subscribers.Contains(subscriber))
+        {
+            Subscribers.Add(subscriber);
+        }
     }
     public void Detach(ISubscriber subscriber)
     {
-        // Implementation of detaching a subscriber
+        if (subscriber == null)
+            throw new ArgumentNullException(nameof(subscriber));
+        Subscribers.Remove(subscriber);
     }
+    public abstract void Execute(string sourcePath, string targetPath);
 }
