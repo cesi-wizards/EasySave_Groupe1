@@ -1,4 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Net.Http.Json;
 using System.Text.Json;
 using EasyLog.Interfaces;
 
@@ -7,7 +9,7 @@ namespace EasyLog.Loggers;
 public class JsonLogger : ILogger
 {
     // name of the mutex (for multiprocess safety)
-    private const string MutexName = "Global\\EasySave_Log_Mutex";
+    private const string _mutexName = "Global\\EasySave_Log_Mutex";
 
     /// <summary>
     /// Implementation of the Write method for registering Json
@@ -16,18 +18,33 @@ public class JsonLogger : ILogger
     /// <param name="content"></param>
     public void Write(string filepath, string content)
     {
-        // use/ create the global mutex
-        using (var mutex = new Mutex(false, MutexName))
+        // null/empty safe
+        if (!string.IsNullOrEmpty(filepath) && !string.IsNullOrEmpty(content))
         {
+            // use/ create the global mutex
+            using var mutex = new Mutex(false, _mutexName);
             try
             {
                 // waiting for the mitex to get freed (5 seconds of timeout)
                 if (mutex.WaitOne(TimeSpan.FromSeconds(5)))
                 {
                     EnsureDirectoryExists(filepath);
-                    string JsonFilePath = FilePathToJsonPath(filepath);
-                    string JsonContent = ContentToJSON(content);
-                    File.AppendAllText(JsonFilePath, JsonContent + Environment.NewLine);
+                    string jsonFilePath = FilePathToJsonPath(filepath);
+                    string jsonContent = ContentToJSON(content);
+
+                    // check if file existed and was empty
+                    bool fileExists = File.Exists(jsonFilePath) && new FileInfo(jsonFilePath).Length > 0;
+
+                    if (!fileExists)
+                    {
+                        // new file
+                        File.WriteAllText(jsonFilePath, jsonContent + Environment.NewLine);
+                    }
+                    else
+                    {
+                        // existing file
+                        File.AppendAllText(jsonFilePath, "," + jsonContent + Environment.NewLine);
+                    }
                 }
             }
             finally
@@ -84,7 +101,7 @@ public class JsonLogger : ILogger
         var logObject = new
         {
             timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-            content = content
+            content
         };
 
         return JsonSerializer.Serialize(logObject);

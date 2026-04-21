@@ -9,7 +9,7 @@ public class EasyLog
     private static EasyLog _instance;
 
     // Locker for multithreading
-    private static readonly object _lock = new object();
+    private static readonly object _lock = new();
 
     private ILogger _logger;
 
@@ -22,25 +22,22 @@ public class EasyLog
         {
             lock (_lock) // Threadsafe
             {
-                if (_instance == null)
-                {
-                    _instance = new EasyLog();
-                }
+                _instance ??= new EasyLog();
                 return _instance;
             }
         }
     }
 
     // Private constructor (singleton design pattern)
-    private EasyLog() { }
+    private EasyLog()
+    {
+        _logger = new JsonLogger();
+    }
 
     /// <summary>
     /// instantiate the logger as a JsonLogger
     /// </summary>
-    private void CreateJsonLogger()
-    {
-        _logger = new JsonLogger();
-    }
+    private void CreateJsonLogger() => _logger = new JsonLogger();
 
     /// <summary>
     /// Default easylog file
