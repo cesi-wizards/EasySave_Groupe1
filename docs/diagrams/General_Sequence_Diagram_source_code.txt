@@ -1,0 +1,81 @@
+@startuml
+
+title Sequence diagram EasyLog V1.0 Scenario : Execute backup jobs k to n (k <= n) 
+
+actor User
+
+participant Program
+
+participant JobManager
+
+participant ConfigManager
+
+participant BackupManager
+
+participant StateManager
+
+participant LogManager
+
+participant EasyLogDll
+
+User -> Program : "EasySave.exe k-n"
+activate Program
+Program --> JobManager : ExecuteJobs(args)
+activate JobManager
+JobManager -> JobManager : AnalyseArguments()
+loop For i in range(k,n, i++)
+JobManager -> ConfigManager : LoadJob(i) informations
+activate ConfigManager
+ConfigManager --> JobManager : jobData(i)
+deactivate ConfigManager
+
+JobManager -> BackupManager : Backup(jobData(i))
+activate BackupManager
+
+
+    loop For each file and repository(then recurtion on the loop) in source repository
+        
+        group State Logic : Current file
+            BackupManager -> StateManager : UpdateProgress(currentFile))
+            activate StateManager
+            StateManager --> BackupManager : Success
+            deactivate StateManager
+            
+        end
+        
+        BackupManager -> BackupManager : BackupFile(file)
+        
+        group Log logic using the dll librairy
+            BackupManager -> LogManager : WriteLog(objectData)
+            activate LogManager
+            LogManager -> LogManager : BuildJsonFromFileInfo(fileInfo, duration)
+            LogManager -> EasyLogDll : WriteLog(jsonData)
+            activate EasyLogDll
+            EasyLogDll --> LogManager : Success
+            deactivate EasyLogDll
+            LogManager --> BackupManager : Success
+            deactivate LogManager
+            
+        end
+    
+        
+    end
+    
+    group State Logic : Job Completed
+            BackupManager -> StateManager : UpdateProgress(completed))
+            activate StateManager
+            StateManager --> BackupManager : Success
+            deactivate StateManager
+            
+        end
+    
+    BackupManager -> JobManager : Job i ended
+    deactivate BackupManager
+end
+
+JobManager -> Program : Jobs ended
+
+deactivate JobManager
+
+deactivate Program
+@enduml
