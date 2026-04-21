@@ -1,6 +1,27 @@
+using EasySave.Domain.Entities;
+using EasySave.Domain.Interfaces;
+using EasySave.Infrastructure.Factories.Interfaces;
+
 namespace EasySave.Infrastructure.Factories;
 
-public class AbstractBackupFactory
+public abstract class AbstractBackupFactory : IBackupFactory
 {
+    public List<ISubscriber> GlobalSubscribers { get; set; } = [];
 
+    public abstract BackupJob CreateJob(string jobName, string srcPath, string targetPath);
+
+    protected void WireSubscribers(IPublisher publisher)
+    {
+        foreach (ISubscriber subscriber in GlobalSubscribers)
+        {
+            publisher.Attach(subscriber);
+        }
+    }
+
+    protected BackupJob CreateJobWithStrategy(string jobName, string srcPath, string targetPath,
+        IBackupStrategy strategy)
+    {
+        WireSubscribers(strategy);
+        return new BackupJob(jobName, srcPath, targetPath, strategy);
+    }
 }
