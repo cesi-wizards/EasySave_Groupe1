@@ -18,7 +18,7 @@ public class JsonLogger : ILogger
     {
         FilePath = FilePathToJsonLinePath(filePath);
     }
-    
+
     /// <summary>
     /// Implementation of the Write method for registering Json
     /// </summary>
