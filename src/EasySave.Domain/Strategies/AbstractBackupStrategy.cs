@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 using EasySave.Domain.Entities;
 using EasySave.Domain.Interfaces;
 
@@ -13,10 +15,14 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
             subscriber.Update(context);
         }
     }
-    public void Attach(ISubscriber subscriber)
+    public void ValidateSuscriber(ISubscriber subscriber)
     {
         if (subscriber == null)
             throw new ArgumentNullException(nameof(subscriber));
+    }
+    public void Attach(ISubscriber subscriber)
+    {
+        ValidateSuscriber(subscriber);
         if (!Subscribers.Contains(subscriber))
         {
             Subscribers.Add(subscriber);
@@ -24,28 +30,30 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
     }
     public void Detach(ISubscriber subscriber)
     {
-        if (subscriber == null)
-            throw new ArgumentNullException(nameof(subscriber));
-        Subscribers.Remove(subscriber);
+        ValidateSuscriber(subscriber); Subscribers.Remove(subscriber);
     }
 
-    public abstract void Execute(string sourcePath, string targetPath);
+    public abstract void Execute(string JobName, string sourcePath, string targetPath);
 
-    protected IEnumerable<string> GetFiles(string sourcePath)
+    protected IEnumerable<string> GetFiles(string directoryPath)
     {
-        if (!Directory.Exists(sourcePath))
+        if (!Directory.Exists(directoryPath))
         {
             return [];
         }
-        return Directory.EnumerateFiles(sourcePath, "*", SearchOption.AllDirectories); // recursive search acting as a generator
+        return Directory.EnumerateFiles(directoryPath, "*", SearchOption.AllDirectories); // recursive search acting as a generator
     }
-    protected void CopyFile(string sourceFile, string targetFile)
+    protected TimeSpan CopyFile(string sourceFile, string targetFile)
     {
         var targetDirectory = Path.GetDirectoryName(targetFile);
         if (!string.IsNullOrEmpty(targetDirectory) && !Directory.Exists(targetDirectory))
         {
             Directory.CreateDirectory(targetDirectory);
         }
+        var stopwatch = Stopwatch.StartNew();
+
         File.Copy(sourceFile, targetFile, overwrite: true);
+
+        stopwatch.Stop(); return stopwatch.Elapsed; // float milliseconds = (float)duration.TotalMilliseconds;
     }
 }

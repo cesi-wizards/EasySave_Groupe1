@@ -1,12 +1,16 @@
 using System.Diagnostics;
+using EasySave.Domain.Entities;
 
 namespace EasySave.Domain.Strategies;
 
 public class DifferentialBackupStrategy : AbstractBackupStrategy
 {
-    public override void Execute(string sourcePath, string targetPath)
+    private (List<string>, int, long) GetFilesToBackup(string sourcePath, string targetPath)
     {
-        foreach (var sourceFile in GetFiles(sourcePath))
+        var toBackup = new List<string>();
+        int count = 0; long size = 0;
+
+        foreach (var sourceFile in GetFiles(sourcePath)) // GetFiles() returns a generator so it won't load unused files into memory
         {
             var relativePath = Path.GetRelativePath(sourcePath, sourceFile);
             var targetFile = Path.Combine(targetPath, relativePath);
@@ -21,11 +25,35 @@ public class DifferentialBackupStrategy : AbstractBackupStrategy
                     needsBackup = false;
                 }
             }
-
             if (needsBackup)
             {
-                CopyFile(sourceFile, targetFile);
+                toBackup.Add(sourceFile);
+                count++;
+                size += new FileInfo(sourceFile).Length;
             }
+        }
+        return (toBackup, count, size);
+    }
+    public override void Execute(string JobName, string sourcePath, string targetPath)
+    {
+        var (toBackup, count, size) = GetFilesToBackup(sourcePath, targetPath);
+        int remainingCount = count; long remainingSize = size;
+
+        foreach (var sourceFile in toBackup)
+        {
+            long fileSize = new FileInfo(sourceFile).Length;
+
+            var relativePath = Path.GetRelativePath(sourcePath, sourceFile);
+            var targetFile = Path.Combine(targetPath, relativePath);
+
+            Context contextPreBackup = new Context();
+            Notify(contextPreBackup);
+            
+            var transferTime = CopyFile(sourceFile, targetFile);
+            remainingCount--; remainingSize -= fileSize;
+
+            Context contextPostBackup = new Context();
+            Notify(contextPostBackup);
         }
     }
 }
