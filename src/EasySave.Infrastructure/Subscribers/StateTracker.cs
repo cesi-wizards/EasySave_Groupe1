@@ -23,8 +23,8 @@ public class StateTracker : ISubscriber
         // ===== CHEMIN UNC =====
         /*
             string serveur = "";
-            string UNC = &@"\\{serveur}\{folderName}\{folderName}";
-            return UNC;
+            string unc = &@"\\{serveur}\{folderName}\{folderName}";
+            return unc;
         */
         // ===== CHEMIN UNC ====
     }
@@ -36,7 +36,7 @@ public class StateTracker : ISubscriber
 
     private Dictionary<string, object> Serialize(Context context)
     {
-        if(context.SourcePath == null && context.TargetPath == null)
+        if(context.RemainingCount == 0)
         {
             return new Dictionary<string, object>()
             {
@@ -55,7 +55,9 @@ public class StateTracker : ISubscriber
         }
 
         int actualFile = context.TotalCount - context.RemainingCount;
-        int percent = (context.RemainingCount / context.TotalCount) * 100;
+        int percent = context.TotalCount > 0
+            ? (int)((double)actualFile / context.TotalCount * 100)
+            : 0;
 
         string progression = $"{actualFile}/{context.TotalCount} - ({percent}%)";
 
@@ -75,14 +77,14 @@ public class StateTracker : ISubscriber
         };
     }
 
-    private string ListDictionaryToJSON(List<Dictionary<string, object>> infoContext)
+    private string ListDictionaryToJson(List<Dictionary<string, object>> infoContext)
     {
         try
         {
             // options for the serialization
             var options = new JsonSerializerOptions
             {
-                WriteIndented = true, // writes all un a single line
+                WriteIndented = true, // pretty-prints the JSON
                 PropertyNamingPolicy = null // keep the name of the keys
             };
 
@@ -113,7 +115,7 @@ public class StateTracker : ISubscriber
                     states = new List<Dictionary<string, object>>();
                 }
 
-                Dictionary<string, object>? item = states.FirstOrDefault(state => state.ContainsKey("JobName") && state["saveName"].ToString() == infoContext["JobName"].ToString());
+                Dictionary<string, object>? item = states.FirstOrDefault(state => state.ContainsKey("JobName") && state["JobName"].ToString() == infoContext["JobName"].ToString());
 
                 if(item != null)
                 {
@@ -134,7 +136,7 @@ public class StateTracker : ISubscriber
                     states.Add(infoContext);
                 }
 
-                string updatedJson = ListDictionaryToJSON(states);
+                string updatedJson = ListDictionaryToJson(states);
                 File.WriteAllText(GetStatePath(), updatedJson);
             }
             catch (Exception ex)

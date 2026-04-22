@@ -37,10 +37,17 @@ public class EasyLog
     /// <param name="filePath"></param>
     private void CreateJsonLogger(string filePath)
     {
-        // Only create it if it wasn't already a JsonLogger
-        if (_logger is not JsonLogger)
+        lock (_lock)
         {
-            _logger = new JsonLogger(filePath);
+            // Only create it if it wasn't already a JsonLogger
+            if (_logger is not JsonLogger)
+            {
+                _logger = new JsonLogger(filePath);
+            }
+            else if (_logger.FilePath != filePath)
+            {
+                _logger = new JsonLogger(filePath);
+            }
         }
     }
 

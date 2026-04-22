@@ -1,5 +1,3 @@
-using System.Reflection.Metadata.Ecma335;
-using EasyLog;
 using EasySave.Domain.Entities;
 using EasySave.Domain.Interfaces;
 
@@ -13,44 +11,52 @@ public class DailyLogger : ISubscriber
         string fileName = $"{DateTime.Now:yyyy-MM-dd}.json";
 
         // ===== CHEMIN LOCAL =====
-        string local = $@"\{folderName}\{folderName}";
+        string local = $@"\{folderName}\{fileName}";
 
         return local;
-        // ===== CHEMIN LOCAL =====
+        // ===== /CHEMIN LOCAL =====
 
         // ===== CHEMIN UNC =====
-        /*
-            string serveur = "";
-            string UNC = &@"\\{serveur}\{folderName}\{folderName}";
-            return UNC;
-        */
-        // ===== CHEMIN UNC ====
+
+        string serveur = "";
+        string unc = $@"\\{serveur}\{folderName}\{folderName}";
+        //return unc;
+
+        // ===== /CHEMIN UNC ====
     }
 
     public void Update(Context context)
     {
-        if (context.TransferTime > 0)
+        if (context.TransferTime != 0)
         {
             WriteToFile(context);
         }
     }
 
+
     private Dictionary<string, object> Serialize(Context context)
     {
-        Dictionary<string, object> infoContext = new Dictionary<string, object>()
+        // Positive transfertime -> normal object
+        if (context.TransferTime < 0)
         {
-            {"DateJob", context.DateJob.ToString("yyyy-MM-dd HH:mm::ss")},
-            {"JobName", context.JobName },
-            {"SourcePath", context.SourcePath },
-            {"TargetPath", context.TargetPath },
-            {"FileSize", context.FileSize },
-            {"TransfertTime", context.TransferTime }
-        };
-
-        return infoContext;
+            return new Dictionary<string, object>()
+            {
+                { "DateJob", context.DateJob.ToString("yyyy-MM-dd HH:mm:ss") },
+                { "JobName", context.JobName },
+                { "SourcePath", context.SourcePath },
+                { "TargetPath", context.TargetPath },
+                { "FileSize", context.FileSize },
+                { "TransfertTime", context.TransferTime }
+            };
+        }
+        // else negative transfertime -> Must write an error
+        else
+        {
+            return new Dictionary<string, object>() { { "DateError", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") } };
+        }
     }
 
-    private void WriteToFile(Context context)
+private void WriteToFile(Context context)
     {
         EasyLog.EasyLog.Instance.LogJson(GetLogFilePath(), Serialize(context));
     }
