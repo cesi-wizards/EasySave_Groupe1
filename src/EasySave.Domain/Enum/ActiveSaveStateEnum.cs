@@ -1,13 +1,15 @@
-namespace EasySave.Domain.Entities;
+namespace EasySave.Domain.Enum;
 
 public enum ActiveSaveStateEnum
 {
     // Attributs
     ACTIVE,
-    INACTIVE;
+    INACTIVE,
+}
 
-    public static string GetStateLabel(ActiveSaveStateEnum state)
-    {
+public static class ActiveSaveStateEnumExtensions
+{
+    public static string GetStateLabel(ActiveSaveStateEnum state){
         return state switch
         {
             ActiveSaveStateEnum.ACTIVE => "Running",
@@ -16,3 +18,4 @@ public enum ActiveSaveStateEnum
         };
     }
 }
+

@@ -1,21 +1,21 @@
-using System.Reflection;
-using System.Runtime.Serialization.Json;
 using System.Text.Json;
 using EasySave.Domain.Entities;
+using EasySave.Domain.Enum;
+using EasySave.Domain.Interfaces;
 
 namespace EasySave.Infrastructure.Subscribers;
 
-public class StateTracker
+public class StateTracker : ISubscriber
 {
     private static readonly object _fileBlock = new object();
 
     private string GetStatePath()
     {
         string folderName = "logs";
-        string fileName = $"states.json";
+        string fileName = "states.json";
 
         // ===== CHEMIN LOCAL =====
-        string local = &@"\{folderName}\{folderName}";
+        string local = $@"\{folderName}\{fileName}";
 
         return local;
         // ===== CHEMIN LOCAL =====
@@ -38,11 +38,11 @@ public class StateTracker
     {
         if(context.SourcePath == null && context.TargetPath == null)
         {
-            Dictionary<string, object> infoContext = new Dictionary<string, object>()
+            return new Dictionary<string, object>()
             {
                 {"JobName", context.JobName },
                 {"DateJob", context.DateJob },
-                {"State", ActiveSaveStateEnum.GetStateLabel(ActiveSaveStateEnum.INACTIVE) },
+                {"State", ActiveSaveStateEnumExtensions.GetStateLabel(ActiveSaveStateEnum.INACTIVE) },
 
                 {"TotalFileCount", 0 },
                 {"TotalFileSize", 0 },
@@ -52,20 +52,18 @@ public class StateTracker
                 {"SourcePath", string.Empty },
                 {"TargetPath", string.Empty }
             };
-
-            return infoContext;
         }
 
         int actualFile = context.TotalCount - context.RemainingCount;
         int percent = (context.RemainingCount / context.TotalCount) * 100;
 
-        string progression = &@"{actualFile}/{context.TotalCount} - ({percent}%)";
+        string progression = $"{actualFile}/{context.TotalCount} - ({percent}%)";
 
-        Dictionary<string, object> infoContext = new Dictionary<string, object>()
+        return new Dictionary<string, object>()
         {
             {"JobName", context.JobName },
             {"DateJob", context.DateJob },
-            {"State", ActiveSaveStateEnum.GetStateLabel(ActiveSaveStateEnum.ACTIVE) },
+            {"State", ActiveSaveStateEnumExtensions.GetStateLabel(ActiveSaveStateEnum.ACTIVE) },
 
             {"TotalFileCount", context.TotalCount },
             {"TotalFileSize", context.TotalSize },
@@ -75,8 +73,6 @@ public class StateTracker
             {"SourcePath", context.SourcePath },
             {"TargetPath", context.TargetPath }
         };
-
-        return infoContext;
     }
 
     private string ListDictionaryToJSON(List<Dictionary<string, object>> infoContext)
@@ -109,15 +105,15 @@ public class StateTracker
             {
                 if (File.Exists(GetStatePath()))
                 {
-                    string fileData = File.ReadAllText(filePath);
-                    states = JsonSerializer.Deserialize < List < Dictionary<string, object> >> ?? new List<Dictionary<string, object>>();
+                    string fileData = File.ReadAllText(GetStatePath());
+                    states = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(fileData) ?? new List<Dictionary<string, object>>();
                 }
                 else
                 {
                     states = new List<Dictionary<string, object>>();
                 }
 
-                var item = states.FirstOrDefault(state => state.ContainsKey("JobName") && state["saveName"].ToString() == infoContext["JobName"].ToString);
+                Dictionary<string, object>? item = states.FirstOrDefault(state => state.ContainsKey("JobName") && state["saveName"].ToString() == infoContext["JobName"].ToString());
 
                 if(item != null)
                 {
@@ -138,11 +134,12 @@ public class StateTracker
                     states.Add(infoContext);
                 }
 
-                string updatedJson = ListDirectoryToJSON(infoContext);
+                string updatedJson = ListDictionaryToJSON(states);
                 File.WriteAllText(GetStatePath(), updatedJson);
             }
             catch (Exception ex)
             {
+                // ignored
             }
         }
 
