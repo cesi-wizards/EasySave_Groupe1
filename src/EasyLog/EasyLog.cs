@@ -34,6 +34,7 @@ public class EasyLog
     /// <summary>
     /// instantiate the logger as a JsonLogger
     /// </summary>
+    /// <param name="filePath"></param>
     private void CreateJsonLogger(string filePath)
     {
         // Only create it if it wasn't already a JsonLogger
@@ -46,7 +47,7 @@ public class EasyLog
     /// <summary>
     /// Default easylog file
     /// </summary>
-    /// <param name="filepath"></param>
+    /// <param name="filePath"></param>
     /// <param name="content"></param>
     public void LogJson(string filePath, Dictionary<string, object> content)
     {

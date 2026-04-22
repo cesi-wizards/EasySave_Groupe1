@@ -13,18 +13,17 @@ public class JsonLogger : ILogger
     /// <summary>
     /// Constructor initiation the file path
     /// </summary>
-    /// <param name="jsonFilePath"></param>
-    public JsonLogger(string jsonFilePath)
+    /// <param name="filePath"></param>
+    public JsonLogger(string filePath)
     {
 
-        _jsonFilePath = FilePathToJsonPath(jsonFilePath);
+        _jsonFilePath = FilePathToJsonPath(filePath);
     }
 
     /// <summary>
     /// Implementation of the Write method for registering Json
     /// </summary>
-    /// <param name="filepath"></param>
-    /// <param name="content"></param>
+    /// <param name="dictionatyContent"></param>
     public void Write(Dictionary<string, object> dictionatyContent)
     {
             // use/ create the global mutex
@@ -70,18 +69,19 @@ public class JsonLogger : ILogger
     /// <summary>
     /// Forces the file to have .json extention to write into
     /// </summary>
-    private string FilePathToJsonPath(string jsonFilePath)
+    /// <param name="filePath"></param>
+    private string FilePathToJsonPath(string filePath)
     {
-        if (string.IsNullOrWhiteSpace(jsonFilePath))
+        if (string.IsNullOrWhiteSpace(filePath))
         {
-            jsonFilePath = "default_log.json";
+            filePath = "default_log.json";
         }
 
-        return Path.ChangeExtension(jsonFilePath, ".json");
+        return Path.ChangeExtension(filePath, ".json");
     }
 
     /// <summary>
-    /// Check if the content was already serialised, else, serialise it
+    /// Serialises a dictionary
     /// </summary>
     /// <param name="dictionaryContent"></param>
     /// <returns></returns>
