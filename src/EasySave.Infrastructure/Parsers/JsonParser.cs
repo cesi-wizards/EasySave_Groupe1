@@ -1,11 +1,12 @@
 using System.Text.Json;
+using EasySave.Domain.Entities;
 
 namespace EasySave.Infrastructure.Parsers;
 
 public class JsonParser
 {
-   
-    FileConfig Parse(string filePath)
+
+    public FileConfig Parse(string filePath)
     {
         if (!File.Exists(filePath))     // Check if the File already exists
         {
