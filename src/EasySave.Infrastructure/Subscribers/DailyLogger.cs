@@ -36,24 +36,15 @@ public class DailyLogger : ISubscriber
 
     private Dictionary<string, object> Serialize(Context context)
     {
-        // Positive transfertime -> normal object
-        if (context.TransferTime < 0)
+        return new Dictionary<string, object>()
         {
-            return new Dictionary<string, object>()
-            {
-                { "DateJob", context.DateJob.ToString("yyyy-MM-dd HH:mm:ss") },
-                { "JobName", context.JobName },
-                { "SourcePath", context.SourcePath },
-                { "TargetPath", context.TargetPath },
-                { "FileSize", context.FileSize },
-                { "TransfertTime", context.TransferTime }
-            };
-        }
-        // else negative transfertime -> Must write an error
-        else
-        {
-            return new Dictionary<string, object>() { { "DateError", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") } };
-        }
+            { "DateJob", context.DateJob.ToString("yyyy-MM-dd HH:mm:ss") },
+            { "JobName", context.JobName },
+            { "SourcePath", context.SourcePath },
+            { "TargetPath", context.TargetPath },
+            { "FileSize", context.FileSize },
+            { "TransfertTime", context.TransferTime }
+        };
     }
 
 private void WriteToFile(Context context)
