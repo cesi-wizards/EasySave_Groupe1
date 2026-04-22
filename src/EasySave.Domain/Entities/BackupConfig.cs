@@ -1,9 +1,9 @@
 namespace EasySave.Domain.Entities;
 
-public class BackupConfig(string name, string sourcePath, string targetPath, BackupType backupType)
+public class BackupConfig(string Name, string SourcePath, string TargetPath, BackupType Type)
 {
-    public required string Name { get; init; } = name;
-    public required string SourcePath { get; init; } = sourcePath;
-    public required string TargetPath { get; init; } = targetPath;
-    public required BackupType Type { get; init; } = backupType;
+    public required string Name { get; init; } = Name;
+    public required string SourcePath { get; init; } = SourcePath;
+    public required string TargetPath { get; init; } = TargetPath;
+    public required BackupType Type { get; init; } = Type;
 }
