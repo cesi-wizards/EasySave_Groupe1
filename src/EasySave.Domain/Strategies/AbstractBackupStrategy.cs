@@ -15,14 +15,14 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
             subscriber.Update(context);
         }
     }
-    public void ValidateSuscriber(ISubscriber subscriber)
+    public void ValidateSubscriber(ISubscriber subscriber)
     {
         if (subscriber == null)
             throw new ArgumentNullException(nameof(subscriber));
     }
     public void Attach(ISubscriber subscriber)
     {
-        ValidateSuscriber(subscriber);
+        ValidateSubscriber(subscriber);
         if (!Subscribers.Contains(subscriber))
         {
             Subscribers.Add(subscriber);
@@ -30,7 +30,8 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
     }
     public void Detach(ISubscriber subscriber)
     {
-        ValidateSuscriber(subscriber); Subscribers.Remove(subscriber);
+        ValidateSubscriber(subscriber);
+        Subscribers.Remove(subscriber);
     }
 
     public abstract void Execute(string JobName, string sourcePath, string targetPath);
@@ -52,8 +53,16 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
         }
         var stopwatch = Stopwatch.StartNew();
 
-        File.Copy(sourceFile, targetFile, overwrite: true);
+        try
+        {
+            File.Copy(sourceFile, targetFile, overwrite: true);
+        }
+        catch
+        {
+            stopwatch.Stop();
+            return TimeSpan.FromMilliseconds(-1); // return negative time if the copy operation fails
+        }
 
-        stopwatch.Stop(); return stopwatch.Elapsed; // float milliseconds = (float)duration.TotalMilliseconds;
+        stopwatch.Stop(); return stopwatch.Elapsed; // get float milliseconds with TimeSpan with (float)duration.TotalMilliseconds;
     }
 }
