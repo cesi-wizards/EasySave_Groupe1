@@ -6,12 +6,14 @@ public static class Program
 {
     public static void Main(string[] args)
     {
-        const string configFilePath = "config.json";
+        string configFilePath = Path.Combine(Directory.GetCurrentDirectory(), "config.json");
         if (args.Length != 0)
         {
-            int[]? jobToExecute = GetJobToExecute(args);
-
-            if (jobToExecute == null) return;
+            if (!File.Exists(configFilePath))
+            {
+                throw new Exception("Aucun fichier de configuration trouvé à l'emplacement : " + configFilePath);
+            }
+            int[] jobToExecute = GetJobsToExecute(args);
 
             var viewModel = new MainViewModel(configFilePath, jobToExecute);
             viewModel.CreateBackupConfig();
@@ -19,7 +21,7 @@ public static class Program
         }
     }
 
-    private static int[]? GetJobToExecute(string[] args)
+    private static int[] GetJobsToExecute(string[] args)
     {
         string arg = args[0];
 
@@ -33,6 +35,9 @@ public static class Program
         {
             return arg.Split(';').Select(int.Parse).ToArray();
         }
-        return null;
+        else
+        {
+            return [1]; // Si aucun argument n'est fourni, exécute le job 1 par défaut
+        }
     }
 }
