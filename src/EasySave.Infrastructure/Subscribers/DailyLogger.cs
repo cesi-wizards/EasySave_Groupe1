@@ -7,11 +7,22 @@ public class DailyLogger
 {
     private string GetLogFilePath()
     {
-        string serveur = "";
         string folderName = "logs";
         string fileName = $"{DateTime.Now:yyyy-MM-dd}.json";
 
-        string UNC = &@"\\{serveur}\{folderName}\{folderName}"
+        // ===== CHEMIN LOCAL =====
+        string local = &@"\{folderName}\{folderName}";
+
+        return local;
+        // ===== CHEMIN LOCAL =====
+
+        // ===== CHEMIN UNC =====
+        /*
+            string serveur = "";
+            string UNC = &@"\\{serveur}\{folderName}\{folderName}";
+            return UNC;
+        */
+        // ===== CHEMIN UNC ====
     }
 
     public void Update(Context context)
