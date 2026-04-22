@@ -1,32 +1,17 @@
 namespace EasySave.Domain.Entities;
 
-public class Context
+public class Context(string jobName, DateTime dateJob, string sourcePath, string targetPath,
+    double fileSize, float transferTime, int totalCount, int remainingCount, int totalSize, int remainingSize)
 {
     // Attributs
-    public string JobName { get; } = string.Empty;
-    public DateTime Timestamp { get; }
-    public string SourcePath { get; } = string.Empty;
-    public string TargetPath { get; } = string.Empty;
-    public double FileSize { get; }
-    public float TransferTime { get; }
-    public int TotalCount { get; }
-    public int RemainingCount { get; }
-    public int TotalSize { get; }
-    public int RemainingSize { get; }
-
-    // Constructors
-    public Context() { }
-    public Context(string jobName, DateTime timestamp, string sourcePath, string targetPath, double fileSize, float transferTime, int totalCount, int remainingCount, int totalSize, int remainingSize)
-    {
-        JobName = jobName;
-        Timestamp = timestamp;
-        SourcePath = sourcePath;
-        TargetPath = targetPath;
-        FileSize = fileSize;
-        TransferTime = transferTime;
-        TotalCount = totalCount;
-        RemainingCount = remainingCount;
-        TotalSize = totalSize;
-        RemainingSize = remainingSize;
-    }
+    public string JobName { get; init; } = jobName;
+    public DateTime DateJob { get; init; } = dateJob;
+    public string SourcePath { get; init;  } = sourcePath;
+    public string TargetPath { get; init; } = targetPath;
+    public double FileSize { get; init; } = fileSize;
+    public float TransferTime { get; init; } = transferTime;
+    public int TotalCount { get; init; } = totalCount;
+    public int RemainingCount { get; init; } = remainingCount;
+    public int TotalSize { get; init; } = totalSize;
+    public int RemainingSize { get; init; } = remainingSize;
 }

@@ -1,4 +1,5 @@
 using System.Reflection.Metadata.Ecma335;
+using EasyLog;
 
 namespace EasySave.Infrastructure.Subscribers;
 
@@ -6,48 +7,38 @@ public class DailyLogger
 {
     private string GetLogFilePath()
     {
-        private string folderPath = "logs";
-        private string fileName = $"{DateTime.Now:yyyy-MM-dd}.json";
+        string serveur = "";
+        string folderName = "logs";
+        string fileName = $"{DateTime.Now:yyyy-MM-dd}.json";
 
-        return Path.Combine(folderPath, fileName);
+        string UNC = &@"\\{serveur}\{folderName}\{folderName}"
     }
 
     public void Update(Context context)
     {
-        // transfère les données au Serialize
-        Serialize(context);
-    }
-    private void Serialize(Context context)
-    {
-        // traite les données -> créé un fichier json dans lequel les données sont récupérées
-
-        /*
-        ecrire quand il reçoit un chemin qui fini par "/" 
-            -> différent si c'est 
-                -> dosssier (avec "/") 
-                -> fichier (sans "/")
-         
-        if (context.SourcePath.EndsWith("/"))
+        if (context.TransferTime > 0)
         {
-            // Dossier
+            WriteToFile(Serialize(context));
         }
-
-        // Fichier
-
-        */
-
-        string sourcePath = context.SourcePath;
-
-
     }
 
-    private void WriteToFile()
+    private Dictionary<string, object> Serialize(Context context)
     {
-        // 
+        Dictionary<string, object> infoContext = new Dictionary<string, object>()
+        {
+            {"DateJob", context.DateJob.ToString("yyyy-MM-dd HH:mm::ss")},
+            {"JobName", context.JobName },
+            {"SourcePath", context.SourcePath },
+            {"TargetPath", context.TargetPath },
+            {"FileSize", context.FileSize },
+            {"TransfertTime", context.TransferTime }
+        };
 
-        /*
-         regarde si il peut écrire le fichier -> chemin valide ?
-        écrit dans le fichier
-         */
+        return infoContext;
+    }
+
+    private void WriteToFile(Dictionary<string, object> infoContext)
+    {
+        EasyLog.EasyLog.Instance.LogJson(GetLogFilePath(), Serialize(infoContext));
     }
 }
