@@ -5,9 +5,9 @@ using EasySave.Infrastructure.Factories.Interfaces;
 
 namespace EasySave.Infrastructure.Factories;
 
-public abstract class AbstractBackupFactory : IBackupFactory
+public abstract class AbstractBackupFactory(List<ISubscriber> subscribers) : IBackupFactory
 {
-    public List<ISubscriber> GlobalSubscribers { get; set; } = [];
+    private List<ISubscriber> GlobalSubscribers { get; init; } = subscribers;
 
     public abstract BackupJob CreateJob(string jobName, string srcPath, string targetPath);
 

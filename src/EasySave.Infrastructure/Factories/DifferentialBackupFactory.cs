@@ -4,7 +4,7 @@ using EasySave.Domain.Strategies;
 
 namespace EasySave.Infrastructure.Factories;
 
-public class DifferentialBackupFactory : AbstractBackupFactory
+public class DifferentialBackupFactory(List<ISubscriber> subscribers) : AbstractBackupFactory(subscribers)
 {
     public override BackupJob CreateJob(string jobName, string srcPath, string targetPath)
     {
