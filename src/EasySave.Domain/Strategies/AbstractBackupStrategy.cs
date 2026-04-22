@@ -3,7 +3,7 @@ using EasySave.Domain.Interfaces;
 
 namespace EasySave.Domain.Strategies;
 
-public abstract class AbstractBackupStrategy : IBackupStrategy
+public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 {
     public List<ISubscriber> Subscribers { get; set; } = [];
     protected void Notify(Context context) // protected to prevent external classes from triggering notifications directly

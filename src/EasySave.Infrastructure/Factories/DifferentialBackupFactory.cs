@@ -8,7 +8,7 @@ public class DifferentialBackupFactory : AbstractBackupFactory
 {
     public override BackupJob CreateJob(string jobName, string srcPath, string targetPath)
     {
-        IBackupStrategy strategy = new DifferentialBackupStrategy();
+        AbstractBackupStrategy strategy = new DifferentialBackupStrategy();
         return CreateJobWithStrategy(jobName, srcPath, targetPath, strategy);
     }
 }

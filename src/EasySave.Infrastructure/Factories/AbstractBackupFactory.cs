@@ -1,5 +1,6 @@
 using EasySave.Domain.Entities;
 using EasySave.Domain.Interfaces;
+using EasySave.Domain.Strategies;
 using EasySave.Infrastructure.Factories.Interfaces;
 
 namespace EasySave.Infrastructure.Factories;
@@ -19,7 +20,7 @@ public abstract class AbstractBackupFactory : IBackupFactory
     }
 
     protected BackupJob CreateJobWithStrategy(string jobName, string srcPath, string targetPath,
-        IBackupStrategy strategy)
+        AbstractBackupStrategy strategy)
     {
         WireSubscribers(strategy);
         return new BackupJob(jobName, srcPath, targetPath, strategy);
