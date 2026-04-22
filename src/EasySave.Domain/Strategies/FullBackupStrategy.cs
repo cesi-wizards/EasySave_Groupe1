@@ -29,13 +29,17 @@ public class FullBackupStrategy : AbstractBackupStrategy
             var relativePath = Path.GetRelativePath(sourcePath, sourceFile);
             var targetFile = Path.Combine(targetPath, relativePath);
 
-            Context contextPreBackup = new Context();
+            Context contextPreBackup = new Context(jobName: JobName, timestamp: DateTime.Now,
+                sourcePath: sourcePath, targetPath: targetPath, fileSize: fileSize, transferTime: TimeSpan.Zero,
+                totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize);
             Notify(contextPreBackup);
 
             var transferTime = CopyFile(sourceFile, targetFile);
             remainingCount--; remainingSize -= fileSize;
 
-            Context contextPostBackup = new Context();
+            Context contextPostBackup = new Context(jobName: JobName, timestamp: DateTime.Now,
+                sourcePath: sourcePath, targetPath: targetPath, fileSize: fileSize, transferTime: transferTime,
+                totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize);
             Notify(contextPostBackup);
         }
     }
