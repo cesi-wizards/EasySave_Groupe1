@@ -16,8 +16,7 @@ public class JsonLogger : ILogger
     /// <param name="filePath"></param>
     public JsonLogger(string filePath)
     {
-
-        _jsonFilePath = FilePathToJsonPath(filePath);
+        _jsonFilePath = FilePathToJsonLinePath(filePath);
     }
 
     /// <summary>
@@ -70,14 +69,14 @@ public class JsonLogger : ILogger
     /// Forces the file to have .json extention to write into
     /// </summary>
     /// <param name="filePath"></param>
-    private string FilePathToJsonPath(string filePath)
+    private string FilePathToJsonLinePath(string filePath)
     {
         if (string.IsNullOrWhiteSpace(filePath))
         {
-            filePath = "default_log.json";
+            filePath = "default_log.jsonl";
         }
 
-        return Path.ChangeExtension(filePath, ".json");
+        return Path.ChangeExtension(filePath, ".jsonl");
     }
 
     /// <summary>
