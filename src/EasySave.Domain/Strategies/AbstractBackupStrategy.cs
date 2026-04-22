@@ -28,5 +28,24 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
             throw new ArgumentNullException(nameof(subscriber));
         Subscribers.Remove(subscriber);
     }
+
     public abstract void Execute(string sourcePath, string targetPath);
+
+    protected IEnumerable<string> GetFiles(string sourcePath)
+    {
+        if (!Directory.Exists(sourcePath))
+        {
+            return [];
+        }
+        return Directory.EnumerateFiles(sourcePath, "*", SearchOption.AllDirectories); // recursive search acting as a generator
+    }
+    protected void CopyFile(string sourceFile, string targetFile)
+    {
+        var targetDirectory = Path.GetDirectoryName(targetFile);
+        if (!string.IsNullOrEmpty(targetDirectory) && !Directory.Exists(targetDirectory))
+        {
+            Directory.CreateDirectory(targetDirectory);
+        }
+        File.Copy(sourceFile, targetFile, overwrite: true);
+    }
 }
