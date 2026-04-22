@@ -44,6 +44,12 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
         }
         return Directory.EnumerateFiles(directoryPath, "*", SearchOption.AllDirectories); // recursive search acting as a generator
     }
+    protected string GetTargetFile(string sourcePath, string targetPath, string sourceFile)
+    {
+        var relativePath = Path.GetRelativePath(sourcePath, sourceFile);
+        var targetFile = Path.Combine(targetPath, relativePath);
+        return targetFile;
+    }
     protected TimeSpan CopyFile(string sourceFile, string targetFile)
     {
         var targetDirectory = Path.GetDirectoryName(targetFile);

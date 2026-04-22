@@ -10,10 +10,9 @@ public class DifferentialBackupStrategy : AbstractBackupStrategy
         var toBackup = new List<string>();
         int count = 0; long size = 0;
 
-        foreach (var sourceFile in GetFiles(sourcePath)) // GetFiles() returns a generator so it won't load unused files into memory
+        foreach (string sourceFile in GetFiles(sourcePath)) // GetFiles() returns a generator so it won't load unused files into memory
         {
-            var relativePath = Path.GetRelativePath(sourcePath, sourceFile);
-            var targetFile = Path.Combine(targetPath, relativePath);
+            string targetFile = GetTargetFile(sourcePath, targetPath, sourceFile);
 
             bool needsBackup = true;
             if (File.Exists(targetFile))
@@ -39,19 +38,18 @@ public class DifferentialBackupStrategy : AbstractBackupStrategy
         var (toBackup, count, size) = GetFilesToBackup(sourcePath, targetPath);
         int remainingCount = count; long remainingSize = size;
 
-        foreach (var sourceFile in toBackup)
+        foreach (string sourceFile in toBackup)
         {
             long fileSize = new FileInfo(sourceFile).Length;
 
-            var relativePath = Path.GetRelativePath(sourcePath, sourceFile);
-            var targetFile = Path.Combine(targetPath, relativePath);
+            string targetFile = GetTargetFile(sourcePath, targetPath, sourceFile);
 
             Context contextPreBackup = new Context( jobName: JobName, timestamp: DateTime.Now,
                 sourcePath: sourcePath, targetPath: targetPath, fileSize: fileSize, transferTime: TimeSpan.Zero,
                 totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize);
             Notify(contextPreBackup);
             
-            var transferTime = CopyFile(sourceFile, targetFile);
+            TimeSpan transferTime = CopyFile(sourceFile, targetFile);
             remainingCount--; remainingSize -= fileSize;
 
             Context contextPostBackup = new Context(jobName: JobName, timestamp: DateTime.Now,
