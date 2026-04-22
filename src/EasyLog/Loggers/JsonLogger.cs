@@ -1,6 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Net.Http.Json;
 using System.Text.Json;
 using EasyLog.Interfaces;
 
@@ -8,6 +5,8 @@ namespace EasyLog.Loggers;
 
 public class JsonLogger : ILogger
 {
+    private string _jsonFilePath = string.Empty;
+
     // name of the mutex (for multiprocess safety)
     private const string _mutexName = "Global\\EasySave_Log_Mutex";
 
@@ -16,41 +15,87 @@ public class JsonLogger : ILogger
     /// </summary>
     /// <param name="filepath"></param>
     /// <param name="content"></param>
-    public void Write(string filepath, string content)
+    public void Write(string jsonFilePath, string content)
     {
         // null/empty safe
-        if (!string.IsNullOrEmpty(filepath) && !string.IsNullOrEmpty(content))
+        if (!string.IsNullOrEmpty(jsonFilePath) && !string.IsNullOrEmpty(content))
         {
+            if (!_jsonFilePath.Equals(jsonFilePath, StringComparison.OrdinalIgnoreCase))
+            {
+                _jsonFilePath = jsonFilePath;
+            }
+
             // use/ create the global mutex
             using var mutex = new Mutex(false, _mutexName);
+            bool hasHandle = false;
+
             try
             {
+                hasHandle = mutex.WaitOne(TimeSpan.FromSeconds(5));
                 // waiting for the mitex to get freed (5 seconds of timeout)
-                if (mutex.WaitOne(TimeSpan.FromSeconds(5)))
+                if (hasHandle)
                 {
-                    EnsureDirectoryExists(filepath);
-                    string jsonFilePath = FilePathToJsonPath(filepath);
+                    EnsureDirectoryExists();
+                    FilePathToJsonPath();
                     string jsonContent = ContentToJSON(content);
 
                     // check if file existed and was empty
-                    bool fileExists = File.Exists(jsonFilePath) && new FileInfo(jsonFilePath).Length > 0;
+                    bool fileExists = File.Exists(_jsonFilePath) && new FileInfo(_jsonFilePath).Length > 0;
 
                     if (!fileExists)
                     {
-                        // new file
-                        File.WriteAllText(jsonFilePath, jsonContent + Environment.NewLine);
+                        WriteJsonInNewFile(jsonContent);
                     }
                     else
                     {
-                        // existing file
-                        File.AppendAllText(jsonFilePath, "," + jsonContent + Environment.NewLine);
+                        WriteJsonInExistingFile(jsonContent);
                     }
                 }
             }
             finally
             {
                 // release the mutex for the other instances to use it
-                mutex.ReleaseMutex();
+                if (hasHandle)
+                {
+                    mutex.ReleaseMutex();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Writes the Json in a new file
+    /// </summary>
+    /// <param name="jsonContent"></param>
+    private void WriteJsonInNewFile(string jsonContent)
+    {
+        // result : [ { "data": "..." , ... } ]
+        File.WriteAllText(_jsonFilePath, "[" + jsonContent + "]");
+    }
+
+    /// <summary>
+    /// Writes the Json in an existing file
+    /// </summary>
+    /// <param name="jsonContent"></param>
+    private void WriteJsonInExistingFile(string jsonContent)
+    {
+        // 1. On ouvre le fichier en mode Lecture/Écriture
+        using (var fs = new FileStream(_jsonFilePath, FileMode.Open, FileAccess.ReadWrite))
+        {
+            if (fs.Length > 1)
+            {
+                fs.Seek(-1, SeekOrigin.End);
+
+                // overwrites the "]"  
+                using (var sw = new StreamWriter(fs))
+                {
+                    sw.Write(Environment.NewLine + "," + jsonContent + "]");
+                }
+            }
+            else
+            {
+                // if file is emtpy or corrupted
+                WriteJsonInNewFile(jsonContent);
             }
         }
     }
@@ -60,13 +105,14 @@ public class JsonLogger : ILogger
     /// <summary>
     /// Forces the file to have .json extention to write into
     /// </summary>
-    /// <param name="filePath"></param>
-    /// <returns></returns>
-    private string FilePathToJsonPath(string filePath)
+    private void FilePathToJsonPath()
     {
-        if (string.IsNullOrWhiteSpace(filePath)) return "default_log.json";
+        if (string.IsNullOrWhiteSpace(_jsonFilePath))
+        {
+            _jsonFilePath = "default_log.json";
+        }
 
-        return Path.ChangeExtension(filePath, ".json");
+        _jsonFilePath =  Path.ChangeExtension(_jsonFilePath, ".json");
     }
 
     /// <summary>
@@ -110,10 +156,9 @@ public class JsonLogger : ILogger
     /// <summary>
     /// Write the whole chain of directories for the file to be saved in
     /// </summary>
-    /// <param name="filepath"></param>
-    private void EnsureDirectoryExists(string filepath)
+    private void EnsureDirectoryExists()
     {
-        string directory = Path.GetDirectoryName(filepath);
+        string directory = Path.GetDirectoryName(_jsonFilePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
         {
             Directory.CreateDirectory(directory);

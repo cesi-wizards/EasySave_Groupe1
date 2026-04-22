@@ -29,24 +29,28 @@ public class EasyLog
     }
 
     // Private constructor (singleton design pattern)
-    private EasyLog()
-    {
-        _logger = new JsonLogger();
-    }
+    private EasyLog(){}
 
     /// <summary>
     /// instantiate the logger as a JsonLogger
     /// </summary>
-    private void CreateJsonLogger() => _logger = new JsonLogger();
+    private void CreateJsonLogger()
+    {
+        // Only create it if it wasn't already a JsonLogger
+        if (_logger is not JsonLogger)
+        {
+            _logger = new JsonLogger();
+        }
+    }
 
     /// <summary>
     /// Default easylog file
     /// </summary>
     /// <param name="filepath"></param>
     /// <param name="content"></param>
-    public void LogJson(string filepath, string content)
+    public void LogJson(string jsonFilePath, string content)
     {
         CreateJsonLogger();
-        _logger.Write(filepath, content);
+        _logger.Write(jsonFilePath, content);
     }
 }
