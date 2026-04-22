@@ -34,12 +34,12 @@ public class EasyLog
     /// <summary>
     /// instantiate the logger as a JsonLogger
     /// </summary>
-    private void CreateJsonLogger()
+    private void CreateJsonLogger(string filePath)
     {
         // Only create it if it wasn't already a JsonLogger
         if (_logger is not JsonLogger)
         {
-            _logger = new JsonLogger();
+            _logger = new JsonLogger(filePath);
         }
     }
 
@@ -48,9 +48,11 @@ public class EasyLog
     /// </summary>
     /// <param name="filepath"></param>
     /// <param name="content"></param>
-    public void LogJson(string jsonFilePath, string content)
+    public void LogJson(string filePath, Dictionary<string, object> content)
     {
-        CreateJsonLogger();
-        _logger.Write(jsonFilePath, content);
+        // Parameters the logger if it didn't existed yet
+        CreateJsonLogger(filePath);
+
+        _logger.Write(content);
     }
 }

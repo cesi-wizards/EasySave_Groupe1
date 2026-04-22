@@ -11,93 +11,58 @@ public class JsonLogger : ILogger
     private const string _mutexName = "Global\\EasySave_Log_Mutex";
 
     /// <summary>
+    /// Constructor initiation the file path
+    /// </summary>
+    /// <param name="jsonFilePath"></param>
+    public JsonLogger(string jsonFilePath)
+    {
+
+        _jsonFilePath = FilePathToJsonPath(jsonFilePath);
+    }
+
+    /// <summary>
     /// Implementation of the Write method for registering Json
     /// </summary>
     /// <param name="filepath"></param>
     /// <param name="content"></param>
-    public void Write(string jsonFilePath, string content)
+    public void Write(Dictionary<string, object> dictionatyContent)
     {
-        // null/empty safe
-        if (!string.IsNullOrEmpty(jsonFilePath) && !string.IsNullOrEmpty(content))
-        {
-            if (!_jsonFilePath.Equals(jsonFilePath, StringComparison.OrdinalIgnoreCase))
-            {
-                _jsonFilePath = jsonFilePath;
-            }
-
             // use/ create the global mutex
             using var mutex = new Mutex(false, _mutexName);
             bool hasHandle = false;
 
-            try
-            {
-                hasHandle = mutex.WaitOne(TimeSpan.FromSeconds(5));
-                // waiting for the mitex to get freed (5 seconds of timeout)
-                if (hasHandle)
-                {
-                    EnsureDirectoryExists();
-                    FilePathToJsonPath();
-                    string jsonContent = ContentToJSON(content);
-
-                    // check if file existed and was empty
-                    bool fileExists = File.Exists(_jsonFilePath) && new FileInfo(_jsonFilePath).Length > 0;
-
-                    if (!fileExists)
-                    {
-                        WriteJsonInNewFile(jsonContent);
-                    }
-                    else
-                    {
-                        WriteJsonInExistingFile(jsonContent);
-                    }
-                }
-            }
-            finally
-            {
-                // release the mutex for the other instances to use it
-                if (hasHandle)
-                {
-                    mutex.ReleaseMutex();
-                }
-            }
-        }
-    }
-
-    /// <summary>
-    /// Writes the Json in a new file
-    /// </summary>
-    /// <param name="jsonContent"></param>
-    private void WriteJsonInNewFile(string jsonContent)
-    {
-        // result : [ { "data": "..." , ... } ]
-        File.WriteAllText(_jsonFilePath, "[" + jsonContent + "]");
-    }
-
-    /// <summary>
-    /// Writes the Json in an existing file
-    /// </summary>
-    /// <param name="jsonContent"></param>
-    private void WriteJsonInExistingFile(string jsonContent)
-    {
-        // 1. On ouvre le fichier en mode Lecture/Écriture
-        using (var fs = new FileStream(_jsonFilePath, FileMode.Open, FileAccess.ReadWrite))
+        try
         {
-            if (fs.Length > 1)
+            hasHandle = mutex.WaitOne(TimeSpan.FromSeconds(5));
+            // waiting for the mitex to get freed (5 seconds of timeout)
+            if (hasHandle)
             {
-                fs.Seek(-1, SeekOrigin.End);
-
-                // overwrites the "]"  
-                using (var sw = new StreamWriter(fs))
-                {
-                    sw.Write(Environment.NewLine + "," + jsonContent + "]");
-                }
-            }
-            else
-            {
-                // if file is emtpy or corrupted
-                WriteJsonInNewFile(jsonContent);
+                string jsonContent = ContentToJSON(dictionatyContent);
+                WriteJson(jsonContent);
             }
         }
+        finally
+        {
+            // release the mutex for the other instances to use it
+            if (hasHandle)
+            {
+                mutex.ReleaseMutex();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Writes the Json
+    /// </summary>
+    /// <param name="jsonContent"></param>
+    private void WriteJson(string jsonContent)
+    {
+        // Ensures the directory to write into exists
+        EnsureDirectoryExists(); 
+
+        // result : { "data": "..." , ... }
+        // if file didn't existed it will also create it
+        File.AppendAllText(_jsonFilePath, jsonContent + Environment.NewLine);
     }
 
     // ----------- Utilitairies
@@ -105,52 +70,45 @@ public class JsonLogger : ILogger
     /// <summary>
     /// Forces the file to have .json extention to write into
     /// </summary>
-    private void FilePathToJsonPath()
+    private string FilePathToJsonPath(string jsonFilePath)
     {
-        if (string.IsNullOrWhiteSpace(_jsonFilePath))
+        if (string.IsNullOrWhiteSpace(jsonFilePath))
         {
-            _jsonFilePath = "default_log.json";
+            jsonFilePath = "default_log.json";
         }
 
-        _jsonFilePath =  Path.ChangeExtension(_jsonFilePath, ".json");
+        return Path.ChangeExtension(jsonFilePath, ".json");
     }
 
     /// <summary>
     /// Check if the content was already serialised, else, serialise it
     /// </summary>
-    /// <param name="content"></param>
+    /// <param name="dictionaryContent"></param>
     /// <returns></returns>
-    private string ContentToJSON(string content)
+    private string ContentToJSON(Dictionary<string, object> dictionaryContent)
     {
-        if (string.IsNullOrWhiteSpace(content)) return "{}";
-
-        content = content.Trim();
-
-        // 1. Check rapide : un JSON commence souvent par { ou [
-        if ((content.StartsWith("{") && content.EndsWith("}")) ||
-            (content.StartsWith("[") && content.EndsWith("]")))
+        // If the dictionary is null or empty, writes an empty log
+        if (dictionaryContent == null || dictionaryContent.Count == 0)
         {
-            try
-            {
-                // Try to parse to confirm it's json
-                using (JsonDocument.Parse(content))
-                {
-                    return content; // C'est du JSON valide, on ne touche à rien
-                }
-            }
-            catch (JsonException)
-            {
-            }
+            return "{}";
         }
 
-        // If we get here, the string wasn't serialazed yet
-        var logObject = new
+        try
         {
-            timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-            content
-        };
+            // options for the serialization
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = false, // writes all un a single line
+                PropertyNamingPolicy = null // keep the name of the keys
+            };
 
-        return JsonSerializer.Serialize(logObject);
+            return JsonSerializer.Serialize(dictionaryContent, options);
+        }
+        catch (Exception)
+        {
+            // In case of an exception
+            return "{}";
+        }
     }
 
     /// <summary>
