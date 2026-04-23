@@ -5,7 +5,7 @@ namespace EasyLog.Loggers;
 
 public class JsonLogger : ILogger
 {
-    private string _jsonFilePath = string.Empty;
+    public string FilePath { get; }
 
     // name of the mutex (for multiprocess safety)
     private const string _mutexName = "Global\\EasySave_Log_Mutex";
@@ -16,7 +16,7 @@ public class JsonLogger : ILogger
     /// <param name="filePath"></param>
     public JsonLogger(string filePath)
     {
-        _jsonFilePath = FilePathToJsonLinePath(filePath);
+        FilePath = FilePathToJsonLinePath(filePath);
     }
 
     /// <summary>
@@ -35,7 +35,7 @@ public class JsonLogger : ILogger
             // waiting for the mitex to get freed (5 seconds of timeout)
             if (hasHandle)
             {
-                string jsonContent = ContentToJSON(dictionatyContent);
+                string jsonContent = ContentToJson(dictionatyContent);
                 WriteJson(jsonContent);
             }
         }
@@ -56,11 +56,11 @@ public class JsonLogger : ILogger
     private void WriteJson(string jsonContent)
     {
         // Ensures the directory to write into exists
-        EnsureDirectoryExists(); 
+        EnsureDirectoryExists();
 
         // result : { "data": "..." , ... }
         // if file didn't existed it will also create it
-        File.AppendAllText(_jsonFilePath, jsonContent + Environment.NewLine);
+        File.AppendAllText(FilePath, jsonContent + Environment.NewLine);
     }
 
     // ----------- Utilitairies
@@ -84,7 +84,7 @@ public class JsonLogger : ILogger
     /// </summary>
     /// <param name="dictionaryContent"></param>
     /// <returns></returns>
-    private string ContentToJSON(Dictionary<string, object> dictionaryContent)
+    private string ContentToJson(Dictionary<string, object> dictionaryContent)
     {
         // If the dictionary is null or empty, writes an empty log
         if (dictionaryContent == null || dictionaryContent.Count == 0)
@@ -115,10 +115,16 @@ public class JsonLogger : ILogger
     /// </summary>
     private void EnsureDirectoryExists()
     {
-        string directory = Path.GetDirectoryName(_jsonFilePath);
-        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        try
         {
-            Directory.CreateDirectory(directory);
+            string directory = Path.GetDirectoryName(FilePath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+        }
+        catch (Exception)
+        {
         }
     }
 }

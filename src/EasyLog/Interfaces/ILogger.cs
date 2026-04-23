@@ -6,5 +6,6 @@ namespace EasyLog.Interfaces;
 
 public interface ILogger
 {
+    string FilePath { get; }
     void Write(Dictionary<string, object> content);
 }
