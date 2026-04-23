@@ -34,8 +34,6 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
         Subscribers.Remove(subscriber);
     }
 
-    public abstract void Execute(string JobName, string sourcePath, string targetPath);
-
     protected IEnumerable<string> GetFiles(string directoryPath)
     {
         if (!Directory.Exists(directoryPath))
@@ -70,5 +68,36 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
         }
 
         stopwatch.Stop(); return stopwatch.Elapsed; // get float milliseconds with TimeSpan with (float)duration.TotalMilliseconds;
+    }
+
+    protected abstract (List<string>, int, long) GetFilesToBackup(string sourcePath, string targetPath);
+
+    public void Execute(string JobName, string sourcePath, string targetPath)
+    {
+        var (toBackup, count, size) = GetFilesToBackup(sourcePath, targetPath);
+        int remainingCount = count; long remainingSize = size;
+
+        foreach (string sourceFile in toBackup)
+        {
+            long fileSize = new FileInfo(sourceFile).Length;
+
+            var targetFile = GetTargetFile(sourcePath, targetPath, sourceFile);
+
+            Context CreateContext(TimeSpan transferTime)
+            {
+                return new Context(jobName: JobName, timestamp: new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(),
+                    sourcePath: sourceFile, targetPath: targetFile, fileSize: fileSize, transferTime: transferTime,
+                    totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize);
+             }
+
+            Context contextPreBackup = CreateContext(TimeSpan.Zero);
+            Notify(contextPreBackup);
+
+            TimeSpan transferTime = CopyFile(sourceFile, targetFile);
+            remainingCount--; remainingSize -= fileSize;
+
+            Context contextPostBackup = CreateContext(transferTime);
+            Notify(contextPostBackup);
+        }
     }
 }
