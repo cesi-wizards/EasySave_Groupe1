@@ -38,7 +38,7 @@ public class DailyLogger : ISubscriber
     {
         return new Dictionary<string, object>()
         {
-            { "DateJob", context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss") },
+            { "DateJob", DateTimeOffset.FromUnixTimeSeconds(context.Timestamp).DateTime.ToString("yyyy-MM-dd HH:mm:ss")},
             { "JobName", context.JobName },
             { "SourcePath", context.SourcePath },
             { "TargetPath", context.TargetPath },

@@ -28,7 +28,7 @@ public class FullBackupStrategy : AbstractBackupStrategy
 
             var targetFile = GetTargetFile(sourcePath, targetPath, sourceFile);
 
-            Context contextPreBackup = new Context(jobName: JobName, timestamp: DateTime.Now,
+            Context contextPreBackup = new Context(jobName: JobName, timestamp: new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(),
                 sourcePath: sourcePath, targetPath: targetPath, fileSize: fileSize, transferTime: TimeSpan.Zero,
                 totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize);
             Notify(contextPreBackup);
@@ -36,7 +36,7 @@ public class FullBackupStrategy : AbstractBackupStrategy
             TimeSpan transferTime = CopyFile(sourceFile, targetFile);
             remainingCount--; remainingSize -= fileSize;
 
-            Context contextPostBackup = new Context(jobName: JobName, timestamp: DateTime.Now,
+            Context contextPostBackup = new Context(jobName: JobName, timestamp: new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(),
                 sourcePath: sourcePath, targetPath: targetPath, fileSize: fileSize, transferTime: transferTime,
                 totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize);
             Notify(contextPostBackup);

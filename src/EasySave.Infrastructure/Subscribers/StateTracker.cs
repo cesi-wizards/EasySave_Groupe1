@@ -41,7 +41,7 @@ public class StateTracker : ISubscriber
             return new Dictionary<string, object>()
             {
                 {"JobName", context.JobName },
-                {"DateJob", context.Timestamp },
+                {"DateJob", DateTimeOffset.FromUnixTimeSeconds(context.Timestamp).DateTime.ToString("yyyy-MM-dd HH:mm:ss")},
                 {"State", ActiveSaveStateEnumExtensions.GetStateLabel(ActiveSaveStateEnum.INACTIVE) },
 
                 {"TotalFileCount", 0 },
@@ -64,7 +64,7 @@ public class StateTracker : ISubscriber
         return new Dictionary<string, object>()
         {
             {"JobName", context.JobName },
-            {"DateJob", context.Timestamp },
+            {"DateJob", DateTimeOffset.FromUnixTimeSeconds(context.Timestamp).DateTime.ToString("yyyy-MM-dd HH:mm:ss") },
             {"State", ActiveSaveStateEnumExtensions.GetStateLabel(ActiveSaveStateEnum.ACTIVE) },
 
             {"TotalFileCount", context.TotalCount },
