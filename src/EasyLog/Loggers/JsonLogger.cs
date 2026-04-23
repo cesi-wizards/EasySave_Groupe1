@@ -103,10 +103,9 @@ public class JsonLogger : ILogger
 
             return JsonSerializer.Serialize(dictionaryContent, options);
         }
-        catch (Exception)
+        catch (JsonException ex)
         {
-            // In case of an exception
-            return "{}";
+            throw new InvalidOperationException("Impossible to serialize the content for the log in JSON.", ex);
         }
     }
 
@@ -123,8 +122,13 @@ public class JsonLogger : ILogger
                 Directory.CreateDirectory(directory);
             }
         }
-        catch (Exception)
+        catch (UnauthorizedAccessException ex)
         {
+            throw new IOException($"Permission denied to create the folder : {FilePath}", ex);
+        }
+        catch (PathTooLongException ex)
+        {
+            throw new IOException($"Filepath is too long for the file tree : {FilePath}", ex);
         }
     }
 }

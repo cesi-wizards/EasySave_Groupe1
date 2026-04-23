@@ -54,13 +54,26 @@ public class EasyLog
     /// <summary>
     /// Default easylog file
     /// </summary>
-    /// <param name="filePath"></param>
-    /// <param name="content"></param>
-    public void LogJson(string filePath, Dictionary<string, object> content)
+    /// <param name="filePath">Path of the file to save into</param>
+    /// <param name="content">Content to save</param>
+    /// <param name="type"> The type of logger to use ("Json", "Xml", ...)</param>
+    public void Write(string filePath, Dictionary<string, object> content, string type)
     {
-        // Parameters the logger if it didn't existed yet
-        CreateJsonLogger(filePath);
+        string format = (type ?? "json").ToLower();
 
+        switch (format)
+        {
+            case ("json") :
+            {
+                CreateJsonLogger(filePath);
+                break;
+            }
+            default:
+            {
+                CreateJsonLogger(filePath);
+                break;
+            }
+        }
         _logger.Write(content);
     }
 }

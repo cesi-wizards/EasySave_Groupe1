@@ -49,6 +49,6 @@ public class DailyLogger : ISubscriber
 
 private void WriteToFile(Context context)
     {
-        EasyLog.EasyLog.Instance.LogJson(GetLogFilePath(), Serialize(context));
+        EasyLog.EasyLog.Instance.Write(GetLogFilePath(), Serialize(context), "json");
     }
 }
