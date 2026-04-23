@@ -15,13 +15,13 @@ public class JsonLogger : ILogger
         FilePath = FilePathToJsonLinePath(filePath);
     }
 
-    public void Write(Dictionary<string, object> dictionatyContent)
+    public void Write(Dictionary<string, object> dictionaryContent)
     {
         lock (_lock)
         {
             try
             {
-                WriteJson(ContentToJson(dictionatyContent));
+                WriteJson(ContentToJson(dictionaryContent));
             }
             catch (Exception ex)
             {
