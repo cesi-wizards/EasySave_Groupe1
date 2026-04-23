@@ -1,17 +1,16 @@
 namespace EasySave.Domain.Entities;
 
-public class Context(string jobName, DateTime dateJob, string sourcePath, string targetPath,
-    double fileSize, float transferTime, int totalCount, int remainingCount, int totalSize, int remainingSize)
+public class Context(string jobName, DateTime timestamp, string sourcePath, string targetPath,
+    long fileSize, TimeSpan transferTime, int totalCount, int remainingCount, long totalSize, long remainingSize)
 {
-    // Attributs
     public string JobName { get; init; } = jobName;
-    public DateTime DateJob { get; init; } = dateJob;
+    public DateTime Timestamp { get; init; } = timestamp;
     public string SourcePath { get; init;  } = sourcePath;
     public string TargetPath { get; init; } = targetPath;
-    public double FileSize { get; init; } = fileSize;
-    public float TransferTime { get; init; } = transferTime;
+    public long FileSize { get; init; } = fileSize;
+    public TimeSpan TransferTime { get; init; } = transferTime;
     public int TotalCount { get; init; } = totalCount;
     public int RemainingCount { get; init; } = remainingCount;
-    public int TotalSize { get; init; } = totalSize;
-    public int RemainingSize { get; init; } = remainingSize;
+    public long TotalSize { get; init; } = totalSize;
+    public long RemainingSize { get; init; } = remainingSize;
 }

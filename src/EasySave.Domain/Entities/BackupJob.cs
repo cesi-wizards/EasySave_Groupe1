@@ -10,6 +10,6 @@ public class BackupJob(string name, string source, string target, IBackupStrateg
     public IBackupStrategy Strategy { get; init; } = strategy;
     public void Execute()
     {
-        Strategy.Execute(Source, Target);
+        Strategy.Execute(Name, Source, Target);
     }
 }
