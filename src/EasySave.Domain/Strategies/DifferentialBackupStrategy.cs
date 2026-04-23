@@ -45,7 +45,7 @@ public class DifferentialBackupStrategy : AbstractBackupStrategy
             string targetFile = GetTargetFile(sourcePath, targetPath, sourceFile);
 
             Context contextPreBackup = new Context( jobName: JobName, timestamp: new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(),
-                sourcePath: sourcePath, targetPath: targetPath, fileSize: fileSize, transferTime: TimeSpan.Zero,
+                sourcePath: sourceFile, targetPath: targetFile, fileSize: fileSize, transferTime: TimeSpan.Zero,
                 totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize);
             Notify(contextPreBackup);
 
@@ -53,7 +53,7 @@ public class DifferentialBackupStrategy : AbstractBackupStrategy
             remainingCount--; remainingSize -= fileSize;
 
             Context contextPostBackup = new Context(jobName: JobName, timestamp: new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(),
-                sourcePath: sourcePath, targetPath: targetPath, fileSize: fileSize, transferTime: transferTime,
+                sourcePath: sourceFile, targetPath: targetFile, fileSize: fileSize, transferTime: transferTime,
                 totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize);
             Notify(contextPostBackup);
         }
