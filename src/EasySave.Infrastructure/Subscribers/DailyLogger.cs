@@ -7,19 +7,19 @@ public class DailyLogger : ISubscriber
 {
     private string GetLogFilePath()
     {
-        string folderName = "logs";
+        string folderName = "Logs";
         string fileName = $"{DateTime.Now:yyyy-MM-dd}.json";
 
         // ===== CHEMIN LOCAL =====
-        string local = $@"\{folderName}\{fileName}";
+        string local = Path.Combine(Directory.GetCurrentDirectory(), folderName, fileName);
 
         return local;
         // ===== /CHEMIN LOCAL =====
 
         // ===== CHEMIN UNC =====
 
-        string serveur = "";
-        string unc = $@"\\{serveur}\{folderName}\{folderName}";
+        //string serveur = "";
+        //string unc = $@"\\{serveur}\{folderName}\{folderName}";
         //return unc;
 
         // ===== /CHEMIN UNC ====
@@ -27,7 +27,7 @@ public class DailyLogger : ISubscriber
 
     public void Update(Context context)
     {
-        if (context.TransferTime != 0)
+        if (context.TransferTime != TimeSpan.Zero)
         {
             WriteToFile(context);
         }
@@ -38,7 +38,7 @@ public class DailyLogger : ISubscriber
     {
         return new Dictionary<string, object>()
         {
-            { "DateJob", context.DateJob.ToString("yyyy-MM-dd HH:mm:ss") },
+            { "DateJob", context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss") },
             { "JobName", context.JobName },
             { "SourcePath", context.SourcePath },
             { "TargetPath", context.TargetPath },

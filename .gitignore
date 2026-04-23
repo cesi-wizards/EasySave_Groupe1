@@ -855,3 +855,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Rider - folder .idea
+.idea/

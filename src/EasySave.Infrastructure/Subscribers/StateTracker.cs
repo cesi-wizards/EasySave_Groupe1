@@ -11,11 +11,11 @@ public class StateTracker : ISubscriber
 
     private string GetStatePath()
     {
-        string folderName = "logs";
+        string folderName = "Logs";
         string fileName = "states.json";
 
         // ===== CHEMIN LOCAL =====
-        string local = $@"\{folderName}\{fileName}";
+        string local = Path.Combine(Directory.GetCurrentDirectory(), folderName, fileName);
 
         return local;
         // ===== CHEMIN LOCAL =====
@@ -41,7 +41,7 @@ public class StateTracker : ISubscriber
             return new Dictionary<string, object>()
             {
                 {"JobName", context.JobName },
-                {"DateJob", context.DateJob },
+                {"DateJob", context.Timestamp },
                 {"State", ActiveSaveStateEnumExtensions.GetStateLabel(ActiveSaveStateEnum.INACTIVE) },
 
                 {"TotalFileCount", 0 },
@@ -64,7 +64,7 @@ public class StateTracker : ISubscriber
         return new Dictionary<string, object>()
         {
             {"JobName", context.JobName },
-            {"DateJob", context.DateJob },
+            {"DateJob", context.Timestamp },
             {"State", ActiveSaveStateEnumExtensions.GetStateLabel(ActiveSaveStateEnum.ACTIVE) },
 
             {"TotalFileCount", context.TotalCount },
