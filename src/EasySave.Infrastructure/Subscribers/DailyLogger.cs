@@ -8,7 +8,7 @@ public class DailyLogger : ISubscriber
     private string GetLogFilePath()
     {
         string folderName = "Logs";
-        string fileName = $"{DateTime.Now:yyyy-MM-dd}.json";
+        string fileName = $"{DateTime.Now:yyyy-MM-dd}";
 
         // ===== CHEMIN LOCAL =====
         string local = Path.Combine(Directory.GetCurrentDirectory(), folderName, fileName);
