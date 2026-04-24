@@ -19,10 +19,10 @@ public abstract class AbstractBackupFactory(List<ISubscriber> subscribers) : IBa
         }
     }
 
-    protected BackupJob CreateJobWithStrategy(string jobName, string srcPath, string targetPath,
+    protected BackupJob CreateJobWithStrategy(string jobName, string sourcePath, string targetPath,
         AbstractBackupStrategy strategy)
     {
         WireSubscribers(strategy);
-        return new BackupJob(jobName, srcPath, targetPath, strategy);
+        return new BackupJob(jobName, sourcePath, targetPath, strategy);
     }
 }

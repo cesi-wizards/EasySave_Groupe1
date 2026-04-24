@@ -7,52 +7,29 @@ public class JsonLogger : ILogger
 {
     public string FilePath { get; }
 
-    // name of the mutex (for multiprocess safety)
-    private const string _mutexName = "Global\\EasySave_Log_Mutex";
+    // Locker for multithreading
+    private static readonly object _lock = new();
 
-    /// <summary>
-    /// Constructor initiation the file path
-    /// </summary>
-    /// <param name="filePath"></param>
     public JsonLogger(string filePath)
     {
         FilePath = FilePathToJsonLinePath(filePath);
     }
 
-    /// <summary>
-    /// Implementation of the Write method for registering Json
-    /// </summary>
-    /// <param name="dictionatyContent"></param>
-    public void Write(Dictionary<string, object> dictionatyContent)
+    public void Write(Dictionary<string, object> dictionaryContent)
     {
-            // use/ create the global mutex
-            using var mutex = new Mutex(false, _mutexName);
-            bool hasHandle = false;
-
-        try
+        lock (_lock)
         {
-            hasHandle = mutex.WaitOne(TimeSpan.FromSeconds(5));
-            // waiting for the mitex to get freed (5 seconds of timeout)
-            if (hasHandle)
+            try
             {
-                string jsonContent = ContentToJson(dictionatyContent);
-                WriteJson(jsonContent);
+                WriteJson(ContentToJson(dictionaryContent));
             }
-        }
-        finally
-        {
-            // release the mutex for the other instances to use it
-            if (hasHandle)
+            catch (Exception ex)
             {
-                mutex.ReleaseMutex();
+                throw new IOException("Error, couldn't write within the file.", ex);
             }
         }
     }
 
-    /// <summary>
-    /// Writes the Json
-    /// </summary>
-    /// <param name="jsonContent"></param>
     private void WriteJson(string jsonContent)
     {
         // Ensures the directory to write into exists
@@ -103,10 +80,9 @@ public class JsonLogger : ILogger
 
             return JsonSerializer.Serialize(dictionaryContent, options);
         }
-        catch (Exception)
+        catch (JsonException ex)
         {
-            // In case of an exception
-            return "{}";
+            throw new InvalidOperationException("Impossible to serialize the content for the log in JSON.", ex);
         }
     }
 
@@ -123,8 +99,13 @@ public class JsonLogger : ILogger
                 Directory.CreateDirectory(directory);
             }
         }
-        catch (Exception)
+        catch (UnauthorizedAccessException ex)
         {
+            throw new IOException($"Permission denied to create the folder : {FilePath}", ex);
+        }
+        catch (PathTooLongException ex)
+        {
+            throw new IOException($"Filepath is too long for the file tree : {FilePath}", ex);
         }
     }
 }
