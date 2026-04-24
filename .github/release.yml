@@ -1,11 +1,12 @@
 changelog:
   categories:
-    - title: 🚀 Nouveautés
+    - title: "🚀 Nouveautés"
       labels:
         - enhancement
-    - title: 🔧 Bug Fixes
+    - title: "🐛 Bug Fixes"
       labels:
         - bug
-    - title: 🔧 Maintenance
+    - title: "🔧 Maintenance"
       labels:
         - chore
+        - documentation
