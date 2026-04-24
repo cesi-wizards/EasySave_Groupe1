@@ -1,0 +1,83 @@
+@startuml
+start
+
+- EasySave.exe k-n
+- Program launch
+- Collect of the arguments
+- Analyse of the arguments
+
+switch (arguments?)
+    case (k)
+        ' Start: processus of a job
+        - Collect of the jobs(k) \n "Source repository"  + "Destination repository" + "Type"
+
+        repeat
+            ' Start: differential logic
+            if(type = differential?) then (yes)
+                if(Does the file already exist?) then (yes)
+                    if(Is it the same file?) then (yes)
+                        :Ignore the file;
+                    endif;
+                endif
+            endif
+            ' End: differential logic
+            :Update state file;
+            :Copie of the file;
+            :Write in the logs;
+        repeat while(are there any remain file?)
+    
+        - Update state file
+        ' End processus of a job
+        
+        
+    case (k-n)
+        repeat
+            ' Start: processus of a job
+            - Collect of the jobs(k) \n "Source repository"  + "Destination repository" + "Type"
+    
+            repeat
+                ' Start: differential logic
+                if(type = differential?) then (yes)
+                    if(Does the file already exist?) then (yes)
+                        if(Is it the same file?) then (yes)
+                            :Ignore the file;
+                        endif;
+                    endif
+                endif
+                ' End: differential logic
+                :Update state file;
+                :Copie of the file;
+                :Write in the logs;
+            repeat while(are there any remain file?)
+        
+            - Update state file
+            ' End processus of a job
+        repeat while(jobs from "k" to "n")
+        
+        
+    case (k;n)
+        repeat
+            ' Start: processus of a job
+            - Collect of the jobs(k) \n "Source repository"  + "Destination repository" + "Type"
+    
+            repeat
+                ' Start: differential logic
+                if(type = differential?) then (yes)
+                    if(Does the file already exist?) then (yes)
+                        if(Is it the same file?) then (yes)
+                            :Ignore the file;
+                        endif;
+                    endif
+                endif
+                ' End: differential logic
+                :Update state file;
+                :Copie of the file;
+                :Write in the logs;
+            repeat while(are there any remain file?)
+        
+            - Update state file
+            ' End processus of a job
+        repeat while(jobs "k" and "n")
+endswitch
+stop
+@enduml
