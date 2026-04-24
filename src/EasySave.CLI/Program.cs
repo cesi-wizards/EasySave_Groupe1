@@ -23,7 +23,7 @@ public static class Program
 
     private static int[] GetJobsToExecute(string[] args)
     {
-        string arg = args[0];
+        string arg = args[0].Trim();
 
         if (arg.Contains('-', StringComparison.CurrentCultureIgnoreCase))
         {
@@ -34,6 +34,10 @@ public static class Program
         else if (arg.Contains(';', StringComparison.CurrentCultureIgnoreCase))
         {
             return arg.Split(';').Select(int.Parse).ToArray();
+        }
+        else if (arg.Length == 1 && int.TryParse(arg, out _))
+        {
+            return [int.Parse(arg)];
         }
         else
         {
