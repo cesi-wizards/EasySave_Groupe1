@@ -51,6 +51,21 @@ public class EasyLog
         }
     }
 
+    private void CreateXmlLogger(string filePath)
+    {
+        lock (_lock)
+        {
+            if (_logger is not XmlLogger)
+            {
+                _logger = new XmlLogger(filePath);
+            }
+            else if(_logger.FilePath != filePath)
+            {
+                _logger = new XmlLogger(filePath);
+            }
+        }
+    }
+
     /// <summary>
     /// Default easylog file
     /// </summary>
@@ -66,6 +81,11 @@ public class EasyLog
             case ("json") :
             {
                 CreateJsonLogger(filePath);
+                break;
+            }
+            case ("xml"):
+            {
+                CreateXmlLogger(filePath);
                 break;
             }
             default:
