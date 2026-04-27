@@ -3,7 +3,7 @@ using EasyLog.Interfaces;
 
 namespace EasyLog.Loggers;
 
-public class JsonLogger : ILogger
+public class JsonLogger : AbstractLogger
 {
     public string FilePath { get; }
 
@@ -15,7 +15,7 @@ public class JsonLogger : ILogger
         FilePath = FilePathToJsonLinePath(filePath);
     }
 
-    public void Write(Dictionary<string, object> dictionaryContent)
+    public override void Write(Dictionary<string, object> dictionaryContent)
     {
         lock (_lock)
         {
@@ -83,29 +83,6 @@ public class JsonLogger : ILogger
         catch (JsonException ex)
         {
             throw new InvalidOperationException("Impossible to serialize the content for the log in JSON.", ex);
-        }
-    }
-
-    /// <summary>
-    /// Write the whole chain of directories for the file to be saved in
-    /// </summary>
-    private void EnsureDirectoryExists()
-    {
-        try
-        {
-            string directory = Path.GetDirectoryName(FilePath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            throw new IOException($"Permission denied to create the folder : {FilePath}", ex);
-        }
-        catch (PathTooLongException ex)
-        {
-            throw new IOException($"Filepath is too long for the file tree : {FilePath}", ex);
         }
     }
 }

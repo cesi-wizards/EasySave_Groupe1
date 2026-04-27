@@ -11,7 +11,7 @@ public class EasyLog
     // Locker for multithreading
     private static readonly object _lock = new();
 
-    private ILogger _logger;
+    private AbstractLogger _abstractLogger;
 
     /// <summary>
     /// Instance getter (singleton design pattern)
@@ -40,13 +40,13 @@ public class EasyLog
         lock (_lock)
         {
             // Only create it if it wasn't already a JsonLogger
-            if (_logger is not JsonLogger)
+            if (_abstractLogger is not JsonLogger)
             {
-                _logger = new JsonLogger(filePath);
+                _abstractLogger = new JsonLogger(filePath);
             }
-            else if (_logger.FilePath != filePath)
+            else if (_abstractLogger.FilePath != filePath)
             {
-                _logger = new JsonLogger(filePath);
+                _abstractLogger = new JsonLogger(filePath);
             }
         }
     }
@@ -55,13 +55,13 @@ public class EasyLog
     {
         lock (_lock)
         {
-            if (_logger is not XmlLogger)
+            if (_abstractLogger is not XmlLogger)
             {
-                _logger = new XmlLogger(filePath);
+                _abstractLogger = new XmlLogger(filePath);
             }
-            else if(_logger.FilePath != filePath)
+            else if(_abstractLogger.FilePath != filePath)
             {
-                _logger = new XmlLogger(filePath);
+                _abstractLogger = new XmlLogger(filePath);
             }
         }
     }
@@ -94,6 +94,6 @@ public class EasyLog
                 break;
             }
         }
-        _logger.Write(content);
+        _abstractLogger.Write(content);
     }
 }

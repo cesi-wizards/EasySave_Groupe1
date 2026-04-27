@@ -3,7 +3,7 @@ using EasyLog.Interfaces;
 
 namespace EasyLog.Loggers;
 
-public class XmlLogger : ILogger
+public class XmlLogger : AbstractLogger
 {
     public string FilePath { get; }
 
@@ -15,7 +15,7 @@ public class XmlLogger : ILogger
         FilePath = FilePathToXmlPath(filePath);
     }
 
-    public void Write(Dictionary<string, object> dictionaryContent)
+    public override void  Write(Dictionary<string, object> dictionaryContent)
     {
         lock (_lock)
         {
@@ -67,25 +67,7 @@ public class XmlLogger : ILogger
         }
     }
 
-    private void EnsureDirectoryExists()
-    {
-        try
-        {
-            string directory = Path.GetDirectoryName(FilePath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            throw new IOException($"Permission denied to create the folder : {FilePath}", ex);
-        }
-        catch (PathTooLongException ex)
-        {
-            throw new IOException($"Filepath is too long for the file tree : {FilePath}", ex);
-        }
-    }
+
 
     private void WriteXml(string xmlContent)
     {
