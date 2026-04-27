@@ -5,6 +5,14 @@ namespace EasySave.Infrastructure.Subscribers;
 
 public class DailyLogger : ISubscriber
 {
+
+    private string _logFileType;
+
+    public DailyLogger(string logFileType)
+    {
+        _logFileType = logFileType;
+    }
+
     private string GetLogFilePath()
     {
         string folderName = "Logs";
@@ -49,6 +57,6 @@ public class DailyLogger : ISubscriber
 
 private void WriteToFile(Context context)
     {
-        EasyLog.EasyLog.Instance.Write(GetLogFilePath(), Serialize(context), "json");
+        EasyLog.EasyLog.Instance.Write(GetLogFilePath(), Serialize(context), _logFileType);
     }
 }
