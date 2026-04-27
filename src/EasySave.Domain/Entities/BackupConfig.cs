@@ -6,5 +6,5 @@ public class BackupConfig(string name, string sourcePath, string targetPath, Bac
     public required string SourcePath { get; init; } = sourcePath;
     public required string TargetPath { get; init; } = targetPath;
     public required BackupType Type { get; init; } = type;
-    public string LogFileType { get; init; } = logFileType;
+    public string LogFileType { get; set; } = logFileType;
 }
