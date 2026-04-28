@@ -1,5 +1,5 @@
 using System.Xml.Linq;
-using EasyLog.Interfaces;
+using EasyLog.Loggers;
 
 namespace EasyLog.Loggers;
 

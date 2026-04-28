@@ -1,4 +1,4 @@
-namespace EasyLog.Interfaces;
+namespace EasyLog.Loggers;
 
 /*
 * Logger interface

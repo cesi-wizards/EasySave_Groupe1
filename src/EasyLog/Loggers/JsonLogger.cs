@@ -1,5 +1,4 @@
 using System.Text.Json;
-using EasyLog.Interfaces;
 
 namespace EasyLog.Loggers;
 

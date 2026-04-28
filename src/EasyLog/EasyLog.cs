@@ -1,4 +1,3 @@
-using EasyLog.Interfaces;
 using EasyLog.Loggers;
 
 namespace EasyLog;
