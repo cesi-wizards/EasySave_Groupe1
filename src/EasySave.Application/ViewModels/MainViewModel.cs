@@ -24,7 +24,11 @@ public class MainViewModel(string configFilePath, int[] jobsToExecute)
         if (totalConfig == null) throw new Exception("No config file found");
         foreach (int job in JobsToExecute)
         {
-            _configs.Add(totalConfig.Jobs[job - 1]);
+            BackupConfig config = totalConfig.Jobs[job - 1];
+
+            config.LogFileType = totalConfig.LogFileType;
+
+            _configs.Add(config);
         }
     }
 
