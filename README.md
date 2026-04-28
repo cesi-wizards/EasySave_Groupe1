@@ -62,15 +62,15 @@ Les jobs sont définis dans un fichier JSON. Chaque job requiert :
   "jobs": [
     {
       "name": "MaSauvegarde",
-      "source": "C:/Users/moi/Documents",
-      "target": "D:/Sauvegardes/Documents",
-      "strategy": "full"
+      "sourcePath": "C:/Users/moi/Documents",
+      "targetPath": "D:/Sauvegardes/Documents",
+      "type": "full"
     },
     {
       "name": "DiffQuotidien",
       "source": "C:/Projets",
       "target": "D:/Sauvegardes/Projets",
-      "strategy": "differential"
+      "type": "differential"
     }
   ]
 }
