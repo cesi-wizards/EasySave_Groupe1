@@ -13,7 +13,7 @@ public class JobManager
     public void AddJob(BackupConfig config)
     {
         ISubscriber stateTracker = new StateTracker();
-        ISubscriber dailyLogger = new DailyLogger();
+        ISubscriber dailyLogger = new DailyLogger(config.LogFileType);
 
         IBackupFactory backupFactory;
 
