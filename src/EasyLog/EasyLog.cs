@@ -5,12 +5,12 @@ namespace EasyLog;
 public class EasyLog
 {
     // Instance (singleton design pattern)
-    private static EasyLog _instance;
+    private static EasyLog? _instance;
 
     // Locker for multithreading
     private static readonly object _lock = new();
 
-    private AbstractLogger _abstractLogger;
+    private AbstractLogger? _abstractLogger;
 
     /// <summary>
     /// Instance getter (singleton design pattern)
@@ -92,6 +92,11 @@ public class EasyLog
                 CreateJsonLogger(filePath);
                 break;
             }
+        }
+
+        if (_abstractLogger is null)
+        {
+            throw new InvalidOperationException("Logger not initialized.");
         }
         _abstractLogger.Write(content);
     }

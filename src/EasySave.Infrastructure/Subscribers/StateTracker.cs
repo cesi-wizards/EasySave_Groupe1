@@ -141,7 +141,7 @@ public class StateTracker : ISubscriber
             }
             catch (Exception ex)
             {
-                // ignored
+                throw new IOException($"Failed to write the State : {GetStatePath()}", ex);
             }
         }
 

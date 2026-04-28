@@ -4,15 +4,10 @@ namespace EasyLog.Loggers;
 
 public class JsonLogger : AbstractLogger
 {
-    public string FilePath { get; }
-
     // Locker for multithreading
     private static readonly object _lock = new();
 
-    public JsonLogger(string filePath)
-    {
-        FilePath = FilePathToJsonLinePath(filePath);
-    }
+    public JsonLogger(string filePath) : base(FilePathToJsonLinePath(filePath)) {}
 
     public override void Write(Dictionary<string, object> dictionaryContent)
     {
@@ -24,7 +19,7 @@ public class JsonLogger : AbstractLogger
             }
             catch (Exception ex)
             {
-                throw new IOException("Error, couldn't write within the file.", ex);
+                throw new IOException("Failed to write to the file.", ex);
             }
         }
     }
@@ -39,13 +34,13 @@ public class JsonLogger : AbstractLogger
         File.AppendAllText(FilePath, jsonContent + Environment.NewLine);
     }
 
-    // ----------- Utilitairies
+    // ----------- Utilities
 
     /// <summary>
-    /// Forces the file to have .json extention to write into
+    /// Forces the file to have .jsonl extention to write into
     /// </summary>
     /// <param name="filePath"></param>
-    private string FilePathToJsonLinePath(string filePath)
+    private static string FilePathToJsonLinePath(string filePath)
     {
         if (string.IsNullOrWhiteSpace(filePath))
         {
