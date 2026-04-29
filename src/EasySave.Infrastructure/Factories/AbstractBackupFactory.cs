@@ -9,7 +9,7 @@ public abstract class AbstractBackupFactory(List<ISubscriber> subscribers) : IBa
 {
     private List<ISubscriber> GlobalSubscribers { get; init; } = subscribers;
 
-    public abstract BackupJob CreateJob(string jobName, string srcPath, string targetPath);
+    public abstract BackupJob CreateJob(string jobName, string srcPath, string targetPath, List<string> encryptTypes, string encryptKey);
 
     protected void WireSubscribers(IPublisher publisher)
     {
@@ -20,9 +20,9 @@ public abstract class AbstractBackupFactory(List<ISubscriber> subscribers) : IBa
     }
 
     protected BackupJob CreateJobWithStrategy(string jobName, string sourcePath, string targetPath,
-        AbstractBackupStrategy strategy)
+        AbstractBackupStrategy strategy, List<string> encryptTypes, string encryptKey)
     {
         WireSubscribers(strategy);
-        return new BackupJob(jobName, sourcePath, targetPath, strategy);
+        return new BackupJob(jobName, sourcePath, targetPath, strategy, encryptTypes, encryptKey);
     }
 }
