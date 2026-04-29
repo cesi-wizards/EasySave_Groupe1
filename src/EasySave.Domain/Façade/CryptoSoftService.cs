@@ -4,7 +4,7 @@ namespace EasySave.Domain.Façade;
 
 public class CryptoSoftService
 {
-    private static readonly string _cryptoSoftExcutableName = "cryptosoft.exe";
+    private static readonly string _cryptoSoftExcutableName = "CryptoSoft.exe";
 
     public static int Encrypt(string filePath, string key)
     {
@@ -13,7 +13,7 @@ public class CryptoSoftService
             StartInfo = new ProcessStartInfo
             {
                 FileName = _cryptoSoftExcutableName,
-                Arguments = $"{filePath},{key}",
+                Arguments = $"\"{filePath}\" {key}",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 CreateNoWindow = true
