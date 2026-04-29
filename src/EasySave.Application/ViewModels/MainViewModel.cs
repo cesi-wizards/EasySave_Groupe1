@@ -19,7 +19,8 @@ public class MainViewModel(string configFilePath, int[] jobsToExecute)
             PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() }
         };
 
-        FileConfig totalConfig = JsonSerializer.Deserialize<FileConfig>(jsonContent, options);
+        FileConfig totalConfig = JsonSerializer.Deserialize<FileConfig>(jsonContent, options)
+            ?? throw new InvalidOperationException("Failed to deserialize config file");
 
         if (totalConfig == null) throw new Exception("No config file found");
         foreach (int job in JobsToExecute)

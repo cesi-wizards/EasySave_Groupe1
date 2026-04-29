@@ -1,39 +1,32 @@
 using System.Xml.Linq;
-using EasyLog.Interfaces;
+using EasyLog.Loggers;
 
 namespace EasyLog.Loggers;
 
 public class XmlLogger : AbstractLogger
 {
-    public string FilePath { get; }
-
     // Locker for multithreading
     private static readonly object _lock = new();
 
-    public XmlLogger(string filePath)
-    {
-        FilePath = FilePathToXmlPath(filePath);
-    }
+    public XmlLogger(string filePath) : base(FilePathToXmlPath(filePath)) {}
 
-    public override void  Write(Dictionary<string, object> dictionaryContent)
+    public override void Write(Dictionary<string, object> dictionaryContent)
     {
         lock (_lock)
         {
             try
             {
-                // On s'assure d'utiliser le bon paramètre
                 string xmlContent = ContentToXml(dictionaryContent);
                 WriteXml(xmlContent);
             }
             catch (Exception ex)
             {
-                // On propage l'erreur avec un message explicite
-                throw new IOException("Échec de l'écriture du log XML.", ex);
+                throw new IOException("Failed to write XML log", ex);
             }
         }
     }
 
-    private string FilePathToXmlPath(string filePath)
+    private static string FilePathToXmlPath(string filePath)
     {
         if (string.IsNullOrWhiteSpace(filePath))
         {
@@ -52,22 +45,16 @@ public class XmlLogger : AbstractLogger
 
         try
         {
-            // On crée un élément racine <LogEntry>
             var root = new XElement("LogEntry",
                 dictionaryContent.Select(kv => new XElement(kv.Key, kv.Value))
             );
-
-            // On exporte en une seule ligne pour garder la logique de "une ligne = un log"
             return root.ToString(SaveOptions.DisableFormatting);
         }
         catch (Exception ex)
         {
-            // Ici on lance une exception liée au XML, pas au JSON !
-            throw new InvalidOperationException("Impossible de sérialiser le contenu en XML.", ex);
+            throw new InvalidOperationException("Failed to serialize config file in XML", ex);
         }
     }
-
-
 
     private void WriteXml(string xmlContent)
     {
@@ -87,7 +74,7 @@ public class XmlLogger : AbstractLogger
         }
         catch (IOException ex)
         {
-            throw new IOException($"Error, couldn't write within the file : {FilePath}", ex);
+            throw new IOException($"Failed to write to the file: {FilePath}", ex);
         }
     }
 
@@ -104,7 +91,7 @@ public class XmlLogger : AbstractLogger
         }
         catch (IOException ex)
         {
-            throw new IOException($"Impossible to create the XML file : {FilePath}", ex);
+            throw new IOException($"Failed to create the XML file: {FilePath}", ex);
         }
     }
 
@@ -124,7 +111,7 @@ public class XmlLogger : AbstractLogger
         }
         catch (Exception ex)
         {
-            throw new IOException($"Error, couldn't save the state of the XML file : {FilePath}", ex);
+            throw new IOException($"Failed to save the XML file: {FilePath}", ex);
         }
     }
 }
