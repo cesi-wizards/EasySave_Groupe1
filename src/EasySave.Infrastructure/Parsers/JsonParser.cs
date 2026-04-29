@@ -14,7 +14,8 @@ public class JsonParser
         }
 
         string fileData = File.ReadAllText(filePath);
-        var jsonConfigFile = JsonSerializer.Deserialize<FileConfig>(fileData);
+        var jsonConfigFile = JsonSerializer.Deserialize<FileConfig>(fileData)
+            ?? throw new InvalidOperationException("Failed to deserialize config file");
         return jsonConfigFile;
     }
 }
