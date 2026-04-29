@@ -1,6 +1,7 @@
 using System.Diagnostics;
 
 using EasySave.Domain.Entities;
+using EasySave.Domain.Façade;
 using EasySave.Domain.Interfaces;
 
 namespace EasySave.Domain.Strategies;
@@ -72,7 +73,7 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 
     protected abstract (List<string>, int, long) GetFilesToBackup(string sourcePath, string targetPath);
 
-    public void Execute(string JobName, string sourcePath, string targetPath)
+    public void Execute(string JobName, string sourcePath, string targetPath, List<string> encryptTypes, string encryptKey)
     {
         var (toBackup, count, size) = GetFilesToBackup(sourcePath, targetPath);
         int remainingCount = count; long remainingSize = size;
@@ -83,20 +84,27 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 
             var targetFile = GetTargetFile(sourcePath, targetPath, sourceFile);
 
-            Context CreateContext(TimeSpan transferTime)
+            Context CreateContext(TimeSpan transferTime, int encryptTime)
             {
                 return new Context(jobName: JobName, timestamp: new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(),
                     sourcePath: sourceFile, targetPath: targetFile, fileSize: fileSize, transferTime: transferTime,
-                    totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize);
+                    totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize, encryptTime: encryptTime);
              }
 
-            Context contextPreBackup = CreateContext(TimeSpan.Zero);
+            Context contextPreBackup = CreateContext(TimeSpan.Zero, 0);
             Notify(contextPreBackup);
 
             TimeSpan transferTime = CopyFile(sourceFile, targetFile);
             remainingCount--; remainingSize -= fileSize;
 
-            Context contextPostBackup = CreateContext(transferTime);
+            int encryptTime = 0;
+            if (encryptTypes.Contains(Path.GetExtension(targetFile)))
+            {
+                encryptTime = CryptoSoftService.Encrypt(targetFile, encryptKey);
+
+            }
+
+            Context contextPostBackup = CreateContext(transferTime, encryptTime);
             Notify(contextPostBackup);
         }
     }
