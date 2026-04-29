@@ -38,12 +38,9 @@ public class EasyLog
     {
         lock (_lock)
         {
-            // Only create it if it wasn't already a JsonLogger
-            if (_abstractLogger is not JsonLogger)
-            {
-                _abstractLogger = new JsonLogger(filePath);
-            }
-            else if (_abstractLogger.FilePath != filePath)
+            string targetPath = Path.ChangeExtension(filePath, ".jsonl");
+
+            if (_abstractLogger is not JsonLogger || _abstractLogger.FilePath != targetPath)
             {
                 _abstractLogger = new JsonLogger(filePath);
             }
@@ -54,11 +51,9 @@ public class EasyLog
     {
         lock (_lock)
         {
-            if (_abstractLogger is not XmlLogger)
-            {
-                _abstractLogger = new XmlLogger(filePath);
-            }
-            else if(_abstractLogger.FilePath != filePath)
+            string targetPath = Path.ChangeExtension(filePath, ".xml");
+
+            if (_abstractLogger is not XmlLogger || _abstractLogger.FilePath != targetPath)
             {
                 _abstractLogger = new XmlLogger(filePath);
             }
