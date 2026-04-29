@@ -98,10 +98,10 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
             remainingCount--; remainingSize -= fileSize;
 
             int encryptTime = 0;
+
             if (encryptTypes.Contains(Path.GetExtension(targetFile)))
             {
                 encryptTime = CryptoSoftService.Encrypt(targetFile, encryptKey);
-
             }
 
             Context contextPostBackup = CreateContext(transferTime, encryptTime);
