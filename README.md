@@ -14,6 +14,7 @@ EasySave est un outil d'automatisation de sauvegardes écrit en C# (.NET 10). Il
 - **Pattern Factory** — `FullBackupFactory` et `DifferentialBackupFactory` gèrent l'instanciation des jobs et le câblage des abonnés de manière transparente.
 - **Parsing de configuration JSON** — les jobs sont configurés via des fichiers JSON parsés au démarrage.
 - **Interface CLI** — lancez et gérez vos sauvegardes depuis la ligne de commande.
+- **Chiffrage CryptoSoft** — chiffrage des fichiers aux extensions choisies.
 
 ---
 
@@ -43,6 +44,11 @@ Patterns utilisés : **Strategy**, **Observer**, **Abstract Factory**, **Templat
 ```bash
 dotnet build EasySave.slnx
 ```
+## Dépendances
+
+-- Cryptosoft
+
+L'exécutable de la solution Cryptosoft "CryptoSoft.exe" dois être placé dans le même dossier que l'executable de EasySave"
 
 ### Lancement
 
@@ -54,23 +60,34 @@ dotnet run --project src/EasySave.CLI 1-1
 
 ## Configuration
 
-Les jobs sont définis dans un fichier JSON. Chaque job requiert :
+Les jobs sont définis dans un fichier "config.json". Chaque job requiert :
 
 ```json
 {
-  "language": "en",
+  "language": "en", // Langage
+  "LogFileType" : "xml", // Format des logs (V2.0.0 supporte "xml" ainsi que "json" (écris en JsonLines))
   "jobs": [
     {
-      "name": "MaSauvegarde",
-      "sourcePath": "C:/Users/moi/Documents",
-      "targetPath": "D:/Sauvegardes/Documents",
-      "type": "full"
+      "name": "MaSauvegarde", // Nom de la sauvegarde
+      "SourcePath": "C:/Users/Source1", // Chemin source de la backup
+      "TargetPath": "C:/Users/Target1", // Chemin où est enregistré la backup
+      "Type": "full",   // "full" -> Sauvegarde de l'ensemble des fichiers
+      "EncryptTypes": [ // optionnel, types d'extensions des fichiers à chiffrer
+        ".json",
+        ".png"
+      ],
+      "EncryptKey": "356" // optionnel, sauf si EncryptTypes non vide
     },
     {
       "name": "DiffQuotidien",
-      "source": "C:/Projets",
-      "target": "D:/Sauvegardes/Projets",
-      "type": "differential"
+      "SourcePath": "C:/Users/Source2",
+      "TargetPath": "C:/Users/Target2",
+      "Type": "differential", // "Differential" -> Sauvegarde des fichiers ayant été modifiés
+      "EncryptTypes": [
+        ".json",
+        ".png"
+      ],
+      "EncryptKey": "356"
     }
   ]
 }
@@ -79,6 +96,7 @@ Les jobs sont définis dans un fichier JSON. Chaque job requiert :
 Le chemin vers ce fichier est passé au démarrage. Le `MainViewModel` le parse et enregistre les jobs dans le `JobManager`.
 
 ---
+
 
 ## Utilisation
 
@@ -93,6 +111,8 @@ dotnet run --project src/EasySave.CLI 1;3` (exécute les job 1 et 3)
 ```bash
 dotnet run --project src/EasySave.CLI 2-4` (exécute les job 2 à 4)
 ```
+
+Le numéro de backup se réfère à l'ordre dans lequel elles sont déclarés dans le fichier de config
 
 Pendant l'exécution, chaque job publie des mises à jour de progression (nombre de fichiers, taille restante, temps de transfert, etc.) à tous les abonnés enregistrés. Le `StateTracker` écrit l'état courant en fichier en temps réel, et le `DailyLogger` ajoute des entrées au log journalier via `EasyLog`.
 
