@@ -44,11 +44,30 @@ Patterns utilisés : **Strategy**, **Observer**, **Abstract Factory**, **Templat
 ```bash
 dotnet build EasySave.slnx
 ```
-## Dépendances
 
--- Cryptosoft
+---
 
-L'exécutable de la solution Cryptosoft "CryptoSoft.exe" dois être placé dans le même dossier que l'executable de EasySave"
+### Dépendances
+
+-- CryptoSoft (Module de chiffrement)
+Pour que les fonctionnalités de chiffrement soient opérationnelles, l'exécutable CryptoSoft.exe doit être accessible globalement sur le système via les variables d'environnement (PATH). Cela permet à EasySave d'appeler le module de chiffrement quel que soit son dossier d'installation.
+
+Instructions de configuration :
+Localisation : Identifiez le dossier contenant votre fichier CryptoSoft.exe.
+
+Ajout au PATH :
+
+Ouvrez un terminal PowerShell en mode Administrateur.
+
+Exécutez la commande suivante (en remplaçant le chemin par le vôtre) :
+
+```bash
+[Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Chemin\Vers\Votre\Dossier\CryptoSoft", "User")
+```
+
+Vérification : Ouvrez une nouvelle console et tapez CryptoSoft.exe. Si le programme se lance (même avec une erreur d'arguments), l'installation est réussie.
+
+---
 
 ### Lancement
 
