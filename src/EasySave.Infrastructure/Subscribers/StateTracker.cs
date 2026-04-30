@@ -137,13 +137,34 @@ public class StateTracker : ISubscriber
                 }
 
                 string updatedJson = ListDictionaryToJson(states);
-                File.WriteAllText(GetStatePath(), updatedJson);
+                string statePath = GetStatePath();
+                EnsureDirectoryExists(statePath);
+                File.WriteAllText(statePath, updatedJson);
             }
             catch (Exception ex)
             {
                 throw new IOException($"Failed to write the State : {GetStatePath()}", ex);
             }
         }
+    }
 
+    private void EnsureDirectoryExists(string filePath)
+    {
+        try
+        {
+            string? directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new IOException($"Permission denied when creating the folder: {filePath}", ex);
+        }
+        catch (PathTooLongException ex)
+        {
+            throw new IOException($"File path is too long for the file tree: {filePath}", ex);
+        }
     }
 }
