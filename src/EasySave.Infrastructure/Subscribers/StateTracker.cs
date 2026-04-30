@@ -97,6 +97,26 @@ public class StateTracker : ISubscriber
         }
     }
 
+    private void EnsureDirectoryExists(string statePath)
+    {
+        try
+        {
+            string? directory = Path.GetDirectoryName(statePath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new IOException($"Permission denied when creating the folder: {statePath}", ex);
+        }
+        catch (PathTooLongException ex)
+        {
+            throw new IOException($"File path is too long for the file tree: {statePath}", ex);
+        }
+    }
+
     private void WriteToFile(Dictionary<string, object> infoContext)
     {
         lock (_fileBlock)
@@ -137,6 +157,7 @@ public class StateTracker : ISubscriber
                 }
 
                 string updatedJson = ListDictionaryToJson(states);
+
                 string statePath = GetStatePath();
                 EnsureDirectoryExists(statePath);
                 File.WriteAllText(statePath, updatedJson);
@@ -145,26 +166,6 @@ public class StateTracker : ISubscriber
             {
                 throw new IOException($"Failed to write the State : {GetStatePath()}", ex);
             }
-        }
-    }
-
-    private void EnsureDirectoryExists(string filePath)
-    {
-        try
-        {
-            string? directory = Path.GetDirectoryName(filePath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            throw new IOException($"Permission denied when creating the folder: {filePath}", ex);
-        }
-        catch (PathTooLongException ex)
-        {
-            throw new IOException($"File path is too long for the file tree: {filePath}", ex);
         }
     }
 }
