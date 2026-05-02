@@ -25,7 +25,7 @@ public class JobManager
         {
             backupFactory = new DifferentialBackupFactory([stateTracker, dailyLogger]);
         }
-        BackupJob jobToAdd = backupFactory.CreateJob(config.Name, config.SourcePath, config.TargetPath, config.EncryptTypes, config.EncryptKey);
+        BackupJob jobToAdd = backupFactory.CreateJob(config.Name, config.SourcePath, config.TargetPath, config.TypesToEncrypt, config.EncryptKey);
         Jobs.Add(jobToAdd);
     }
 

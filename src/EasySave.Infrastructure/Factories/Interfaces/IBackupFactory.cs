@@ -4,5 +4,5 @@ namespace EasySave.Infrastructure.Factories.Interfaces;
 
 public interface IBackupFactory
 {
-    public BackupJob CreateJob(string jobName, string srcPath, string targetPath, List<string> encryptTypes, string encryptKey);
+    public BackupJob CreateJob(string jobName, string srcPath, string targetPath, List<string> TypesToEncrypt, string encryptKey);
 }

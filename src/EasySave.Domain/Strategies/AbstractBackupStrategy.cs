@@ -73,7 +73,7 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 
     protected abstract (List<string>, int, long) GetFilesToBackup(string sourcePath, string targetPath);
 
-    public void Execute(string JobName, string sourcePath, string targetPath, List<string> encryptTypes, string encryptKey)
+    public void Execute(string JobName, string sourcePath, string targetPath, List<string> TypesToEncrypt, string encryptKey)
     {
         var (toBackup, count, size) = GetFilesToBackup(sourcePath, targetPath);
         int remainingCount = count; long remainingSize = size;
@@ -99,7 +99,7 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 
             int encryptTime = 0;
 
-            if (encryptTypes.Contains(Path.GetExtension(targetFile)))
+            if (TypesToEncrypt.Contains(Path.GetExtension(targetFile)))
             {
                 encryptTime = CryptoSoftService.Encrypt(targetFile, encryptKey);
             }
