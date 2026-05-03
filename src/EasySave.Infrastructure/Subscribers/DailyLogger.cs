@@ -52,7 +52,8 @@ public class DailyLogger : ISubscriber
             { "TargetPath", context.TargetPath },
             { "FileSize", context.FileSize },
             { "TransfertTime", context.TransferTime },
-            { "EncryptTime", context.EncryptTime }
+            { "EncryptTime", context.EncryptTime },
+            { "StopReason", context.StopReason ?? string.Empty }
         };
     }
 

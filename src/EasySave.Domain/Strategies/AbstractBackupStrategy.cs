@@ -89,31 +89,29 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 
     public void Execute(string jobName, string sourcePath, string targetPath, List<string> typesToEncrypt, string encryptKey)
     {
-        if (_softwareDetector?.IsSoftwareRunning() == true)
-        {
-            return;
-        }
-
         var (toBackup, count, size) = GetFilesToBackup(sourcePath, targetPath);
         int remainingCount = count; long remainingSize = size;
 
         foreach (string sourceFile in toBackup)
         {
-            if (_softwareDetector?.IsSoftwareRunning() == true)
-            {
-                break;
-            }
-
             long fileSize = new FileInfo(sourceFile).Length;
 
             var targetFile = GetTargetFile(sourcePath, targetPath, sourceFile);
 
-            Context CreateContext(TimeSpan transferTime, TimeSpan encryptTime)
+            Context CreateContext(TimeSpan transferTime, TimeSpan encryptTime, string? stopReason = null)
             {
                 return new Context(jobName: jobName, timestamp: new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(),
                     sourcePath: sourceFile, targetPath: targetFile, fileSize: fileSize, transferTime: transferTime,
-                    totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize, encryptTime: encryptTime);
+                    totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize, encryptTime: encryptTime
+                    stopReason: stopReason);
              }
+
+            if (_softwareDetector?.IsSoftwareRunning() == true)
+            {
+                Context contextStop = CreateContext(TimeSpan.FromMilliseconds(-1), TimeSpan.FromMilliseconds(0), stopReason: "business_software_running");
+                Notify(contextStop);
+                break;
+            }
 
             Context contextPreBackup = CreateContext(TimeSpan.Zero, TimeSpan.FromMilliseconds(0));
             Notify(contextPreBackup);
@@ -130,11 +128,6 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 
             Context contextPostBackup = CreateContext(transferTime, encryptTime);
             Notify(contextPostBackup);
-
-            if (_softwareDetector?.IsSoftwareRunning() == true)
-            {
-                break;
-            }
         }
     }
 }
