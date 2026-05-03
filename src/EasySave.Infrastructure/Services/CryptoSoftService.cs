@@ -1,18 +1,22 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using EasySave.Domain.Interfaces;
 
-namespace EasySave.Domain.Façade;
+namespace EasySave.Infrastructure.Services;
 
-public class CryptoSoftService
+public class CryptoSoftService : IEncryptionService
 {
-    private static readonly string _cryptoSoftExecutableName = "CryptoSoft.exe";
-    public static int Encrypt(string filePath, string key)
+    private static readonly string _cryptoSoftExecutableName =
+        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "CryptoSoft.exe" : "CryptoSoft";
+
+    public TimeSpan Encrypt(string filePath, string key)
     {
         using (Process process = new Process())
         {
             process.StartInfo = new ProcessStartInfo
             {
                 FileName = _cryptoSoftExecutableName,
-                Arguments = $"\"{filePath}\" \"{key}\"",
+                Arguments = $"\"{filePath.Trim()}\" \"{key.Trim()}\"",
                 UseShellExecute = false,
                 RedirectStandardOutput = false,
                 CreateNoWindow = true
@@ -22,18 +26,18 @@ public class CryptoSoftService
                 process.Start();
                 process.WaitForExit();
 
-                return process.ExitCode;
+                return TimeSpan.FromMilliseconds(process.ExitCode);
             }
             catch (System.ComponentModel.Win32Exception)
             {
                 // Couldn't find the path to cryptosoft in environment variables
-                Debug.WriteLine("Error : CryptoSoft.exe isn't in!! the PATH of Windows.");
-                return -3;
+                Debug.WriteLine($"Error : {_cryptoSoftExecutableName} wasn't found in the PATH.");
+                return TimeSpan.FromMilliseconds(-3);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error CryptoSoft : {ex.Message}");
-                return -2;
+                return TimeSpan.FromMilliseconds(-2);
             }
         }
     }

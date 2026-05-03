@@ -1,6 +1,7 @@
 using EasySave.Domain.Entities;
 using EasySave.Domain.Interfaces;
 using EasySave.Domain.Strategies;
+using EasySave.Infrastructure.Services;
 
 namespace EasySave.Infrastructure.Factories;
 
@@ -8,7 +9,7 @@ public class FullBackupFactory(List<ISubscriber> subscribers) : AbstractBackupFa
 {
     public override BackupJob CreateJob(string jobName, string sourcePath, string targetPath, List<string> TypesToEncrypt, string encryptKey)
     {
-        AbstractBackupStrategy strategy = new FullBackupStrategy();
+        AbstractBackupStrategy strategy = new FullBackupStrategy(new CryptoSoftService());
         return CreateJobWithStrategy(jobName, sourcePath, targetPath, strategy, TypesToEncrypt, encryptKey);
     }
 }
