@@ -15,6 +15,9 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
     }
 
     public List<ISubscriber> Subscribers { get; set; } = [];
+
+    private readonly ISoftwareDetector? _softwareDetector;
+
     protected void Notify(Context context) // protected to prevent external classes from triggering notifications directly
     {
         foreach (var subscriber in Subscribers)
@@ -39,6 +42,11 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
     {
         ValidateSubscriber(subscriber);
         Subscribers.Remove(subscriber);
+    }
+
+    protected AbstractBackupStrategy(ISoftwareDetector? softwareDetector = null)
+    {
+        _softwareDetector = softwareDetector;
     }
 
     protected IEnumerable<string> GetFiles(string directoryPath)
@@ -90,12 +98,20 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 
             var targetFile = GetTargetFile(sourcePath, targetPath, sourceFile);
 
-            Context CreateContext(TimeSpan transferTime, TimeSpan encryptTime)
+            Context CreateContext(TimeSpan transferTime, TimeSpan encryptTime, string? stopReason = null)
             {
                 return new Context(jobName: jobName, timestamp: new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(),
                     sourcePath: sourceFile, targetPath: targetFile, fileSize: fileSize, transferTime: transferTime,
-                    totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize, encryptTime: encryptTime);
+                    totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize, encryptTime: encryptTime
+                    stopReason: stopReason);
              }
+
+            if (_softwareDetector?.IsSoftwareRunning() == true)
+            {
+                Context contextStop = CreateContext(TimeSpan.FromMilliseconds(-1), TimeSpan.FromMilliseconds(0), stopReason: "business_software_running");
+                Notify(contextStop);
+                break;
+            }
 
             Context contextPreBackup = CreateContext(TimeSpan.Zero, TimeSpan.FromMilliseconds(0));
             Notify(contextPreBackup);

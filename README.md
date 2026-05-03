@@ -108,14 +108,14 @@ Les jobs sont définis dans un fichier "config.json". Chaque job requiert :
       ],
       "EncryptKey": "356"
     }
-  ]
+  ],
+  "businessSoftwares": [ "notepad" ]
 }
 ```
 
 Le chemin vers ce fichier est passé au démarrage. Le `MainViewModel` le parse et enregistre les jobs dans le `JobManager`.
 
 ---
-
 
 ## Utilisation
 
