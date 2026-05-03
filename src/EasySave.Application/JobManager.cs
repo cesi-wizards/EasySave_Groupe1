@@ -52,6 +52,13 @@ public class JobManager
         }
     }
 
+    public void SetBusinessSoftwares(IEnumerable<string> businessSoftwares)
+    {
+        _businessSoftwares.Clear();
+        _businessSoftwares.AddRange(businessSoftwares);
+        _softwareDetector.UpdateProcessNames(_businessSoftwares);
+    }
+
     public void ExecuteJob(string name)
     {
         BackupJob? job = Jobs.Find(j => j.Name == name);

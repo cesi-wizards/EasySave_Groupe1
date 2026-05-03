@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EasySave.Domain.Entities;
@@ -24,6 +23,12 @@ public partial class MainWindowViewModel : ViewModelBase
         _jobManager.AddJob(config, jobVm);
     }
 
+    partial void OnBlockingAppChanged(string value)
+    {
+        var softwares = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        _jobManager.SetBusinessSoftwares(softwares);
+    }
+
     [RelayCommand]
     private void RemoveJob(BackupJobViewModel jobVm)
     {
@@ -34,13 +39,6 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void ExecuteJob(BackupJobViewModel jobVm)
     {
-        if (!string.IsNullOrWhiteSpace(BlockingApp))
-        {
-            var processes = Process.GetProcessesByName(BlockingApp.Trim());
-            if (processes.Length > 0)
-                return;
-        }
-
         jobVm.Progress = 0;
         jobVm.CurrentFile = string.Empty;
         _jobManager.ExecuteJob(jobVm.Config.Name);
