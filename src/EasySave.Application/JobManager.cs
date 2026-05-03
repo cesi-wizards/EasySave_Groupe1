@@ -20,20 +20,24 @@ public class JobManager
         _softwareDetector = new SoftwareDetector(_businessSoftwares);
     }
 
-    public void AddJob(BackupConfig config)
+    public void AddJob(BackupConfig config, ISubscriber? extraSubscriber = null)
     {
         ISubscriber stateTracker = new StateTracker();
         ISubscriber dailyLogger = new DailyLogger(config.LogFileType);
+
+        List<ISubscriber> subscribers = [stateTracker, dailyLogger];
+        if (extraSubscriber is not null)
+            subscribers.Add(extraSubscriber);
 
         IBackupFactory backupFactory;
 
         if (config.Type == BackupType.Full)
         {
-            backupFactory = new FullBackupFactory([stateTracker, dailyLogger], _softwareDetector);
+            backupFactory = new FullBackupFactory(subscribers, _softwareDetector);
         }
         else
         {
-            backupFactory = new DifferentialBackupFactory([stateTracker, dailyLogger], _softwareDetector);
+            backupFactory = new DifferentialBackupFactory(subscribers, _softwareDetector);
         }
         BackupJob jobToAdd = backupFactory.CreateJob(config.Name, config.SourcePath, config.TargetPath, config.TypesToEncrypt, config.EncryptKey);
         Jobs.Add(jobToAdd);
@@ -46,6 +50,12 @@ public class JobManager
         {
             Jobs.Remove(jobToRemove);
         }
+    }
+
+    public void ExecuteJob(string name)
+    {
+        BackupJob? job = Jobs.Find(j => j.Name == name);
+        job?.Execute();
     }
 
     public void ExecuteJobs()
