@@ -1,9 +1,10 @@
-using System.Diagnostics;
 using EasySave.Domain.Entities;
+using EasySave.Domain.Interfaces;
 
 namespace EasySave.Domain.Strategies;
 
-public class DifferentialBackupStrategy : AbstractBackupStrategy
+public class DifferentialBackupStrategy(IEncryptionService encryptionService)
+    : AbstractBackupStrategy(encryptionService)
 {
     protected override (List<string>, int, long) GetFilesToBackup(string sourcePath, string targetPath)
     {
