@@ -7,7 +7,18 @@ namespace EasySave.Domain.Strategies;
 
 public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 {
+    private readonly IEncryptionService _encryptionService;
+
+    protected AbstractBackupStrategy(IEncryptionService encryptionService, ISoftwareDetector? softwareDetector = null)
+    {
+        _encryptionService = encryptionService;
+        _softwareDetector = softwareDetector;
+    }
+
     public List<ISubscriber> Subscribers { get; set; } = [];
+
+    private readonly ISoftwareDetector? _softwareDetector;
+
     protected void Notify(Context context) // protected to prevent external classes from triggering notifications directly
     {
         foreach (var subscriber in Subscribers)
@@ -72,7 +83,7 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 
     protected abstract (List<string>, int, long) GetFilesToBackup(string sourcePath, string targetPath);
 
-    public void Execute(string JobName, string sourcePath, string targetPath)
+    public void Execute(string jobName, string sourcePath, string targetPath, List<string> typesToEncrypt, string encryptKey)
     {
         var (toBackup, count, size) = GetFilesToBackup(sourcePath, targetPath);
         int remainingCount = count; long remainingSize = size;
@@ -83,20 +94,35 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 
             var targetFile = GetTargetFile(sourcePath, targetPath, sourceFile);
 
-            Context CreateContext(TimeSpan transferTime)
+            Context CreateContext(TimeSpan transferTime, TimeSpan encryptTime, string? stopReason = null)
             {
-                return new Context(jobName: JobName, timestamp: new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(),
+                return new Context(jobName: jobName, timestamp: new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(),
                     sourcePath: sourceFile, targetPath: targetFile, fileSize: fileSize, transferTime: transferTime,
-                    totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize);
+                    totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize, encryptTime: encryptTime,
+                    stopReason: stopReason);
              }
 
-            Context contextPreBackup = CreateContext(TimeSpan.Zero);
+            if (_softwareDetector?.IsSoftwareRunning() == true)
+            {
+                Context contextStop = CreateContext(TimeSpan.FromMilliseconds(-1), TimeSpan.FromMilliseconds(0), stopReason: "business_software_running");
+                Notify(contextStop);
+                break;
+            }
+
+            Context contextPreBackup = CreateContext(TimeSpan.Zero, TimeSpan.FromMilliseconds(0));
             Notify(contextPreBackup);
 
             TimeSpan transferTime = CopyFile(sourceFile, targetFile);
             remainingCount--; remainingSize -= fileSize;
 
-            Context contextPostBackup = CreateContext(transferTime);
+            TimeSpan encryptTime = TimeSpan.FromMilliseconds(0);
+
+            if (typesToEncrypt.Contains(Path.GetExtension(targetFile)))
+            {
+                encryptTime = _encryptionService.Encrypt(targetFile, encryptKey);
+            }
+
+            Context contextPostBackup = CreateContext(transferTime, encryptTime);
             Notify(contextPostBackup);
         }
     }

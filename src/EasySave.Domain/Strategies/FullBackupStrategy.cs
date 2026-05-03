@@ -1,9 +1,12 @@
 using EasySave.Domain.Entities;
+using EasySave.Domain.Interfaces;
 
 namespace EasySave.Domain.Strategies;
 
-public class FullBackupStrategy : AbstractBackupStrategy
+public class FullBackupStrategy(IEncryptionService encryptionService, ISoftwareDetector? softwareDetector = null)
+    : AbstractBackupStrategy(encryptionService, softwareDetector)
 {
+
     protected override (List<string>, int, long) GetFilesToBackup(string sourcePath, string targetPath)
     {
         var toBackup = new List<string>();
