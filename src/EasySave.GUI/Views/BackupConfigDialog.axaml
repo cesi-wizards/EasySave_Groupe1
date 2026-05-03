@@ -1,0 +1,103 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:EasySave.GUI.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="440" d:DesignHeight="520"
+        x:Class="EasySave.GUI.Views.BackupConfigDialog"
+        x:DataType="vm:BackupConfigDialogViewModel"
+        Title="New Backup Configuration"
+        Width="440"
+        SizeToContent="Height"
+        MinHeight="200"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+
+    <Design.DataContext>
+        <vm:BackupConfigDialogViewModel/>
+    </Design.DataContext>
+
+    <Grid RowDefinitions="*,Auto" Margin="20">
+
+        <StackPanel Grid.Row="0" Spacing="12">
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Name"/>
+                <TextBox Text="{Binding Name}" PlaceholderText="Backup name"/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <Button Content="Select the source directory"
+                        Click="SelectFolderButton_Click"
+                        Tag="SourcePath"/>
+                <TextBlock Text="{Binding SourcePath}" TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <Button Content="Select the target directory"
+                        Click="SelectFolderButton_Click"
+                        Tag="TargetPath"/>
+                <TextBlock Text="{Binding TargetPath}" TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Backup Type"/>
+                <ComboBox ItemsSource="{Binding BackupTypes}"
+                          SelectedItem="{Binding SelectedType}"
+                          HorizontalAlignment="Stretch"/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Encryption Key"/>
+                <TextBox Text="{Binding EncryptKey}"
+                         PlaceholderText="Enter encryption key (leave empty for no encryption)"
+                         PasswordChar="●"/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Encrypted Extensions"/>
+                <Grid ColumnDefinitions="*,8,Auto">
+                    <TextBox Grid.Column="0"
+                             Text="{Binding ExtensionInput}"
+                             PlaceholderText=".ext"
+                             x:Name="ExtensionInputBox"/>
+                    <Button Grid.Column="2"
+                            Content="Add"
+                            Command="{Binding AddExtensionCommand}"/>
+                </Grid>
+                <ItemsControl ItemsSource="{Binding EncryptedExtensions}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="*,8,Auto" Margin="0,2">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding}"
+                                           VerticalAlignment="Center"/>
+                                <Button Grid.Column="2"
+                                        Content="✕"
+                                        Padding="6,2"
+                                        Command="{Binding $parent[ItemsControl].((vm:BackupConfigDialogViewModel)DataContext).RemoveExtensionCommand}"
+                                        CommandParameter="{Binding}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+
+        </StackPanel>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,8,*" Margin="0,16,0,0">
+            <Button Grid.Column="0" Content="Cancel"
+                    Command="{Binding CancelCommand}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"/>
+            <Button Grid.Column="2" Content="Create"
+                    Command="{Binding ConfirmCommand}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"
+                    Classes="accent"/>
+        </Grid>
+
+    </Grid>
+
+</Window>

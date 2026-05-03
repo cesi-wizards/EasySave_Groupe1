@@ -9,7 +9,7 @@ using EasySave.GUI.Views;
 
 namespace EasySave.GUI;
 
-public partial class App : Application
+public partial class App : Avalonia.Application
 {
     public override void Initialize()
     {
