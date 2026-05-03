@@ -9,9 +9,10 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 {
     private readonly IEncryptionService _encryptionService;
 
-    protected AbstractBackupStrategy(IEncryptionService encryptionService)
+    protected AbstractBackupStrategy(IEncryptionService encryptionService, ISoftwareDetector? softwareDetector = null)
     {
         _encryptionService = encryptionService;
+        _softwareDetector = softwareDetector;
     }
 
     public List<ISubscriber> Subscribers { get; set; } = [];
@@ -42,11 +43,6 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
     {
         ValidateSubscriber(subscriber);
         Subscribers.Remove(subscriber);
-    }
-
-    protected AbstractBackupStrategy(ISoftwareDetector? softwareDetector = null)
-    {
-        _softwareDetector = softwareDetector;
     }
 
     protected IEnumerable<string> GetFiles(string directoryPath)
@@ -102,7 +98,7 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
             {
                 return new Context(jobName: jobName, timestamp: new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(),
                     sourcePath: sourceFile, targetPath: targetFile, fileSize: fileSize, transferTime: transferTime,
-                    totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize, encryptTime: encryptTime
+                    totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize, encryptTime: encryptTime,
                     stopReason: stopReason);
              }
 
