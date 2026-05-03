@@ -15,6 +15,9 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
     }
 
     public List<ISubscriber> Subscribers { get; set; } = [];
+
+    private readonly ISoftwareDetector? _softwareDetector;
+
     protected void Notify(Context context) // protected to prevent external classes from triggering notifications directly
     {
         foreach (var subscriber in Subscribers)
@@ -39,6 +42,11 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
     {
         ValidateSubscriber(subscriber);
         Subscribers.Remove(subscriber);
+    }
+
+    protected AbstractBackupStrategy(ISoftwareDetector? softwareDetector = null)
+    {
+        _softwareDetector = softwareDetector;
     }
 
     protected IEnumerable<string> GetFiles(string directoryPath)
@@ -81,11 +89,21 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 
     public void Execute(string jobName, string sourcePath, string targetPath, List<string> typesToEncrypt, string encryptKey)
     {
+        if (_softwareDetector?.IsSoftwareRunning() == true)
+        {
+            return;
+        }
+
         var (toBackup, count, size) = GetFilesToBackup(sourcePath, targetPath);
         int remainingCount = count; long remainingSize = size;
 
         foreach (string sourceFile in toBackup)
         {
+            if (_softwareDetector?.IsSoftwareRunning() == true)
+            {
+                break;
+            }
+
             long fileSize = new FileInfo(sourceFile).Length;
 
             var targetFile = GetTargetFile(sourcePath, targetPath, sourceFile);
@@ -112,6 +130,11 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 
             Context contextPostBackup = CreateContext(transferTime, encryptTime);
             Notify(contextPostBackup);
+
+            if (_softwareDetector?.IsSoftwareRunning() == true)
+            {
+                break;
+            }
         }
     }
 }

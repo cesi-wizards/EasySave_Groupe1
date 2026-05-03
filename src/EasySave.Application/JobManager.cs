@@ -2,6 +2,7 @@ using EasySave.Domain.Entities;
 using EasySave.Domain.Interfaces;
 using EasySave.Infrastructure.Factories;
 using EasySave.Infrastructure.Factories.Interfaces;
+using EasySave.Infrastructure.Services;
 using EasySave.Infrastructure.Subscribers;
 
 namespace EasySave.Application;
@@ -9,6 +10,15 @@ namespace EasySave.Application;
 public class JobManager
 {
     public List<BackupJob> Jobs { get; private set; } = [];
+
+    private readonly List<string> _businessSoftwares;
+    private readonly ISoftwareDetector _softwareDetector;
+
+    public JobManager(List<string>? businessSoftwares = null)
+    {
+        _businessSoftwares = businessSoftwares ?? [];
+        _softwareDetector = new SoftwareDetector(_businessSoftwares);
+    }
 
     public void AddJob(BackupConfig config)
     {
@@ -19,11 +29,11 @@ public class JobManager
 
         if (config.Type == BackupType.Full)
         {
-            backupFactory = new FullBackupFactory([stateTracker, dailyLogger]);
+            backupFactory = new FullBackupFactory([stateTracker, dailyLogger], _softwareDetector);
         }
         else
         {
-            backupFactory = new DifferentialBackupFactory([stateTracker, dailyLogger]);
+            backupFactory = new DifferentialBackupFactory([stateTracker, dailyLogger], _softwareDetector);
         }
         BackupJob jobToAdd = backupFactory.CreateJob(config.Name, config.SourcePath, config.TargetPath, config.TypesToEncrypt, config.EncryptKey);
         Jobs.Add(jobToAdd);
