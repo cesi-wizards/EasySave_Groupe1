@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EasySave.Domain.Entities;
@@ -37,10 +38,10 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void ExecuteJob(BackupJobViewModel jobVm)
+    private async Task ExecuteJob(BackupJobViewModel jobVm)
     {
         jobVm.Progress = 0;
         jobVm.CurrentFile = string.Empty;
-        _jobManager.ExecuteJob(jobVm.Config.Name);
+        await Task.Run(() => _jobManager.ExecuteJob(jobVm.Config.Name));
     }
 }
