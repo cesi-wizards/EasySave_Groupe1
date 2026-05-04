@@ -9,6 +9,7 @@
         <Project Path="src/EasySave.Infrastructure/EasySave.Infrastructure.csproj" />
         <Project Path="src/EasySave.Application/EasySave.Application.csproj" />
         <Project Path="src/EasySave.CLI/EasySave.CLI.csproj" />
+        <Project Path="src/EasySave.GUI/EasySave.GUI.csproj" />
     </Folder>
 
 </Solution>

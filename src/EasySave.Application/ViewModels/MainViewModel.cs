@@ -8,6 +8,7 @@ namespace EasySave.Application.ViewModels;
 public class MainViewModel(string configFilePath, int[] jobsToExecute)
 {
     private List<BackupConfig> _configs { get; set; } = [];
+    private List<string> _businessSoftwares { get; set; } = [];
     private string ConfigFilePath { get; } = Path.Combine(Directory.GetCurrentDirectory(), configFilePath);
     private int[] JobsToExecute { get; init; } = jobsToExecute;
 
@@ -31,11 +32,13 @@ public class MainViewModel(string configFilePath, int[] jobsToExecute)
 
             _configs.Add(config);
         }
+
+        _businessSoftwares = totalConfig.BusinessSoftwares ?? [];
     }
 
     public void Execute()
     {
-        var jobManager = new JobManager();
+        var jobManager = new JobManager(_businessSoftwares);
         foreach (BackupConfig config in _configs)
         {
             jobManager.AddJob(config);

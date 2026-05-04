@@ -33,62 +33,124 @@ jobs:
           dotnet-version: '10.0.x'
 
       # ── Build CLI pour chaque plateforme ─────────────────────────────────────
-      - name: Publish — Windows x64
+      - name: Publish CLI — Windows x64
         run: |
           dotnet publish src/EasySave.CLI/EasySave.CLI.csproj \
             -c Release -r win-x64 --self-contained true \
             -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }} \
-            -o dist/win-x64
-          mv dist/win-x64/EasySave.exe dist/EasySave-win-x64.exe
+            -o dist/cli-win-x64
+          mv dist/cli-win-x64/EasySave.exe dist/EasySave-win-x64.exe
 
-      - name: Publish — Windows x86
+      - name: Publish CLI — Windows x86
         run: |
           dotnet publish src/EasySave.CLI/EasySave.CLI.csproj \
             -c Release -r win-x86 --self-contained true \
             -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }} \
-            -o dist/win-x86
-          mv dist/win-x86/EasySave.exe dist/EasySave-win-x86.exe
+            -o dist/cli-win-x86
+          mv dist/cli-win-x86/EasySave.exe dist/EasySave-win-x86.exe
 
-      - name: Publish — Windows ARM64
+      - name: Publish CLI — Windows ARM64
         run: |
           dotnet publish src/EasySave.CLI/EasySave.CLI.csproj \
             -c Release -r win-arm64 --self-contained true \
             -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }} \
-            -o dist/win-arm64
-          mv dist/win-arm64/EasySave.exe dist/EasySave-win-arm64.exe
+            -o dist/cli-win-arm64
+          mv dist/cli-win-arm64/EasySave.exe dist/EasySave-win-arm64.exe
 
-      - name: Publish — Linux x64
+      - name: Publish CLI — Linux x64
         run: |
           dotnet publish src/EasySave.CLI/EasySave.CLI.csproj \
             -c Release -r linux-x64 --self-contained true \
             -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }} \
-            -o dist/linux-x64
-          tar -czf dist/EasySave-linux-x64.tar.gz -C dist/linux-x64 .
+            -o dist/cli-linux-x64
+          tar -czf dist/EasySave-linux-x64.tar.gz -C dist/cli-linux-x64 .
 
-      - name: Publish — Linux ARM64
+      - name: Publish CLI — Linux ARM64
         run: |
           dotnet publish src/EasySave.CLI/EasySave.CLI.csproj \
             -c Release -r linux-arm64 --self-contained true \
             -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }} \
-            -o dist/linux-arm64
-          tar -czf dist/EasySave-linux-arm64.tar.gz -C dist/linux-arm64 .
+            -o dist/cli-linux-arm64
+          tar -czf dist/EasySave-linux-arm64.tar.gz -C dist/cli-linux-arm64 .
 
-      - name: Publish — macOS x64
+      - name: Publish CLI — macOS x64
         run: |
           dotnet publish src/EasySave.CLI/EasySave.CLI.csproj \
             -c Release -r osx-x64 --self-contained true \
             -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }} \
-            -o dist/osx-x64
-          tar -czf dist/EasySave-osx-x64.tar.gz -C dist/osx-x64 .
+            -o dist/cli-osx-x64
+          tar -czf dist/EasySave-osx-x64.tar.gz -C dist/cli-osx-x64 .
 
-      - name: Publish — macOS ARM64
+      - name: Publish CLI — macOS ARM64
         run: |
           dotnet publish src/EasySave.CLI/EasySave.CLI.csproj \
             -c Release -r osx-arm64 --self-contained true \
             -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }} \
-            -o dist/osx-arm64
-          tar -czf dist/EasySave-osx-arm64.tar.gz -C dist/osx-arm64 .
+            -o dist/cli-osx-arm64
+          tar -czf dist/EasySave-osx-arm64.tar.gz -C dist/cli-osx-arm64 .
 
+      # ── Build GUI pour chaque plateforme ─────────────────────────────────────
+      - name: Publish GUI — Windows x64
+        run: |
+          dotnet publish src/EasySave.GUI/EasySave.GUI.csproj \
+            -c Release -r win-x64 --self-contained true \
+            -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }} \
+            -o dist/gui-win-x64
+          zip -j dist/EasySave-GUI-win-x64.zip dist/gui-win-x64/EasySave.GUI.exe
+
+      - name: Publish GUI — Windows ARM64
+        run: |
+          dotnet publish src/EasySave.GUI/EasySave.GUI.csproj \
+            -c Release -r win-arm64 --self-contained true \
+            -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }} \
+            -o dist/gui-win-arm64
+          zip -j dist/EasySave-GUI-win-arm64.zip dist/gui-win-arm64/EasySave.GUI.exe
+
+      - name: Publish GUI — Linux x64
+        run: |
+          dotnet publish src/EasySave.GUI/EasySave.GUI.csproj \
+            -c Release -r linux-x64 --self-contained true \
+            -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }} \
+            -o dist/gui-linux-x64
+          tar -czf dist/EasySave-GUI-linux-x64.tar.gz -C dist/gui-linux-x64 EasySave.GUI
+
+      - name: Publish GUI — Linux ARM64
+        run: |
+          dotnet publish src/EasySave.GUI/EasySave.GUI.csproj \
+            -c Release -r linux-arm64 --self-contained true \
+            -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }} \
+            -o dist/gui-linux-arm64
+          tar -czf dist/EasySave-GUI-linux-arm64.tar.gz -C dist/gui-linux-arm64 EasySave.GUI
+
+      - name: Publish GUI — macOS x64 (.app bundle)
+        run: |
+          dotnet publish src/EasySave.GUI/EasySave.GUI.csproj \
+            -c Release -r osx-x64 --self-contained true \
+            -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }} \
+            -o dist/gui-osx-x64
+          mkdir -p dist/EasySave-osx-x64.app/Contents/MacOS
+          mkdir -p dist/EasySave-osx-x64.app/Contents/Resources
+          cp dist/gui-osx-x64/EasySave.GUI dist/EasySave-osx-x64.app/Contents/MacOS/EasySave
+          sed 's/2\.0\.0/${{ steps.version.outputs.value }}/g' \
+            src/EasySave.GUI/Info.plist > dist/EasySave-osx-x64.app/Contents/Info.plist
+          chmod +x dist/EasySave-osx-x64.app/Contents/MacOS/EasySave
+          tar -czf dist/EasySave-GUI-osx-x64.tar.gz -C dist EasySave-osx-x64.app
+
+      - name: Publish GUI — macOS ARM64 (.app bundle)
+        run: |
+          dotnet publish src/EasySave.GUI/EasySave.GUI.csproj \
+            -c Release -r osx-arm64 --self-contained true \
+            -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }} \
+            -o dist/gui-osx-arm64
+          mkdir -p dist/EasySave-osx-arm64.app/Contents/MacOS
+          mkdir -p dist/EasySave-osx-arm64.app/Contents/Resources
+          cp dist/gui-osx-arm64/EasySave.GUI dist/EasySave-osx-arm64.app/Contents/MacOS/EasySave
+          sed 's/2\.0\.0/${{ steps.version.outputs.value }}/g' \
+            src/EasySave.GUI/Info.plist > dist/EasySave-osx-arm64.app/Contents/Info.plist
+          chmod +x dist/EasySave-osx-arm64.app/Contents/MacOS/EasySave
+          tar -czf dist/EasySave-GUI-osx-arm64.tar.gz -C dist EasySave-osx-arm64.app
+
+      # ── EasyLog DLL + NuGet ───────────────────────────────────────────────────
       - name: Publish DLL — Portable
         run: |
           dotnet build src/EasyLog/EasyLog.csproj \
@@ -97,7 +159,6 @@ jobs:
             -o dist/dll
           zip -j dist/EasyLog-dll.zip dist/dll/EasyLog.dll
 
-      # ── NuGet — GitHub Packages ───────────────────────────────────────────────
       - name: Pack EasyLog
         run: |
           dotnet pack src/EasyLog/EasyLog.csproj \
@@ -132,5 +193,11 @@ jobs:
             dist/EasySave-linux-arm64.tar.gz
             dist/EasySave-osx-x64.tar.gz
             dist/EasySave-osx-arm64.tar.gz
+            dist/EasySave-GUI-win-x64.zip
+            dist/EasySave-GUI-win-arm64.zip
+            dist/EasySave-GUI-linux-x64.tar.gz
+            dist/EasySave-GUI-linux-arm64.tar.gz
+            dist/EasySave-GUI-osx-x64.tar.gz
+            dist/EasySave-GUI-osx-arm64.tar.gz
             dist/EasyLog-dll.zip
             dist/nuget/*.nupkg
