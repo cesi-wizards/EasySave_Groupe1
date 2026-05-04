@@ -131,6 +131,7 @@ jobs:
           mkdir -p dist/EasySave-osx-x64.app/Contents/MacOS
           mkdir -p dist/EasySave-osx-x64.app/Contents/Resources
           cp dist/gui-osx-x64/EasySave.GUI dist/EasySave-osx-x64.app/Contents/MacOS/EasySave
+          cp dist/gui-osx-x64/*.dylib dist/EasySave-osx-x64.app/Contents/MacOS/ 2>/dev/null || true
           sed 's/2\.0\.0/${{ steps.version.outputs.value }}/g' \
             src/EasySave.GUI/Info.plist > dist/EasySave-osx-x64.app/Contents/Info.plist
           chmod +x dist/EasySave-osx-x64.app/Contents/MacOS/EasySave
@@ -145,6 +146,7 @@ jobs:
           mkdir -p dist/EasySave-osx-arm64.app/Contents/MacOS
           mkdir -p dist/EasySave-osx-arm64.app/Contents/Resources
           cp dist/gui-osx-arm64/EasySave.GUI dist/EasySave-osx-arm64.app/Contents/MacOS/EasySave
+          cp dist/gui-osx-arm64/*.dylib dist/EasySave-osx-arm64.app/Contents/MacOS/ 2>/dev/null || true
           sed 's/2\.0\.0/${{ steps.version.outputs.value }}/g' \
             src/EasySave.GUI/Info.plist > dist/EasySave-osx-arm64.app/Contents/Info.plist
           chmod +x dist/EasySave-osx-arm64.app/Contents/MacOS/EasySave
