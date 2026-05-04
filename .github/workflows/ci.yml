@@ -175,6 +175,7 @@ jobs:
           sed 's/2\.0\.0/${{ steps.version.outputs.value }}/g' \
             src/EasySave.GUI/Info.plist > dist/EasySave-osx-x64.app/Contents/Info.plist
           chmod +x dist/EasySave-osx-x64.app/Contents/MacOS/EasySave
+          codesign --force --deep --sign - dist/EasySave-osx-x64.app
           tar -czf dist/EasySave-GUI-osx-x64.tar.gz -C dist EasySave-osx-x64.app
 
       - name: Publish GUI — macOS ARM64 (.app bundle)
@@ -190,6 +191,7 @@ jobs:
           sed 's/2\.0\.0/${{ steps.version.outputs.value }}/g' \
             src/EasySave.GUI/Info.plist > dist/EasySave-osx-arm64.app/Contents/Info.plist
           chmod +x dist/EasySave-osx-arm64.app/Contents/MacOS/EasySave
+          codesign --force --deep --sign - dist/EasySave-osx-arm64.app
           tar -czf dist/EasySave-GUI-osx-arm64.tar.gz -C dist EasySave-osx-arm64.app
 
       - name: Upload artifacts
