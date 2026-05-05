@@ -6,7 +6,7 @@
         mc:Ignorable="d" d:DesignWidth="440" d:DesignHeight="520"
         x:Class="EasySave.GUI.Views.BackupConfigDialog"
         x:DataType="vm:BackupConfigDialogViewModel"
-        Title="New Backup Configuration"
+        Title="{Binding Localization.BackupConfigTitle}"
         Width="440"
         SizeToContent="Height"
         MinHeight="200"
@@ -22,47 +22,47 @@
         <StackPanel Grid.Row="0" Spacing="12">
 
             <StackPanel Spacing="4">
-                <TextBlock Text="Name"/>
-                <TextBox Text="{Binding Name}" PlaceholderText="Backup name"/>
+                <TextBlock Text="{Binding Localization.NameLabel}"/>
+                <TextBox Text="{Binding Name}" PlaceholderText="{Binding Localization.BackupNamePlaceholder}"/>
             </StackPanel>
 
             <StackPanel Spacing="4">
-                <Button Content="Select the source directory"
+                <Button Content="{Binding Localization.SelectSourceDirectory}"
                         Click="SelectFolderButton_Click"
                         Tag="SourcePath"/>
                 <TextBlock Text="{Binding SourcePath}" TextWrapping="Wrap"/>
             </StackPanel>
 
             <StackPanel Spacing="4">
-                <Button Content="Select the target directory"
+                <Button Content="{Binding Localization.SelectTargetDirectory}"
                         Click="SelectFolderButton_Click"
                         Tag="TargetPath"/>
                 <TextBlock Text="{Binding TargetPath}" TextWrapping="Wrap"/>
             </StackPanel>
 
             <StackPanel Spacing="4">
-                <TextBlock Text="Backup Type"/>
+                <TextBlock Text="{Binding Localization.BackupTypeLabel}"/>
                 <ComboBox ItemsSource="{Binding BackupTypes}"
                           SelectedItem="{Binding SelectedType}"
                           HorizontalAlignment="Stretch"/>
             </StackPanel>
 
             <StackPanel Spacing="4">
-                <TextBlock Text="Encryption Key"/>
+                <TextBlock Text="{Binding Localization.EncryptionKeyLabel}"/>
                 <TextBox Text="{Binding EncryptKey}"
-                         PlaceholderText="Enter encryption key (leave empty for no encryption)"
+                         PlaceholderText="{Binding Localization.EncryptionKeyPlaceholder}"
                          PasswordChar="●"/>
             </StackPanel>
 
             <StackPanel Spacing="4">
-                <TextBlock Text="Encrypted Extensions"/>
+                <TextBlock Text="{Binding Localization.EncryptedExtensionsLabel}"/>
                 <Grid ColumnDefinitions="*,8,Auto">
                     <TextBox Grid.Column="0"
                              Text="{Binding ExtensionInput}"
                              PlaceholderText=".ext"
                              x:Name="ExtensionInputBox"/>
                     <Button Grid.Column="2"
-                            Content="Add"
+                            Content="{Binding Localization.AddButton}"
                             Command="{Binding AddExtensionCommand}"/>
                 </Grid>
                 <ItemsControl ItemsSource="{Binding EncryptedExtensions}">
@@ -87,11 +87,11 @@
         </StackPanel>
 
         <Grid Grid.Row="1" ColumnDefinitions="*,8,*" Margin="0,16,0,0">
-            <Button Grid.Column="0" Content="Cancel"
+            <Button Grid.Column="0" Content="{Binding Localization.CancelButton}"
                     Command="{Binding CancelCommand}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Center"/>
-            <Button Grid.Column="2" Content="Create"
+            <Button Grid.Column="2" Content="{Binding Localization.CreateButton}"
                     Command="{Binding ConfirmCommand}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Center"
