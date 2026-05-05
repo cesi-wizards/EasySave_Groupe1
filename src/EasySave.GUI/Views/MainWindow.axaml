@@ -15,12 +15,15 @@
 
     <Grid RowDefinitions="Auto,*" Margin="20">
 
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,8,Auto">
             <Button Grid.Column="0"
-                    Content="+ New Backup"
+                    Content="{Binding Localization.NewBackup}"
                     Click="OnNewBackupClick"/>
             <Button Grid.Column="2"
-                    Content="⚙ Settings"
+                    Content="{Binding Localization.LanguageButton}"
+                    Command="{Binding Localization.ToggleLanguageCommand}"/>
+            <Button Grid.Column="4"
+                    Content="{Binding Localization.SettingsButton}"
                     Click="OnSettingsClick"/>
         </Grid>
 
