@@ -1,8 +1,9 @@
+using EasyLog.Interfaces;
 using EasyLog.Loggers;
 
 namespace EasyLog;
 
-public class EasyLog
+public class EasyLog : IEasyLog
 {
     // Instance (singleton design pattern)
     private static EasyLog? _instance;
@@ -10,7 +11,9 @@ public class EasyLog
     // Locker for multithreading
     private static readonly object _lock = new();
 
-    private AbstractLogger? _abstractLogger;
+    private AbstractLogger? _localLogger;
+
+    private AbstractDistantLogger? _distantLogger;
 
     /// <summary>
     /// Instance getter (singleton design pattern)
@@ -36,63 +39,92 @@ public class EasyLog
     /// <param name="filePath"></param>
     private void CreateJsonLogger(string filePath)
     {
-        lock (_lock)
-        {
-            string targetPath = Path.ChangeExtension(filePath, ".jsonl");
+        string targetPath = Path.ChangeExtension(filePath, ".jsonl");
 
-            if (_abstractLogger is not JsonLogger || _abstractLogger.FilePath != targetPath)
-            {
-                _abstractLogger = new JsonLogger(filePath);
-            }
+        if (_localLogger is not JsonLogger ||_localLogger.FilePath != targetPath)
+        {
+            _localLogger = new JsonLogger(filePath);
         }
     }
 
     private void CreateXmlLogger(string filePath)
     {
-        lock (_lock)
-        {
-            string targetPath = Path.ChangeExtension(filePath, ".xml");
+        string targetPath = Path.ChangeExtension(filePath, ".xml");
 
-            if (_abstractLogger is not XmlLogger || _abstractLogger.FilePath != targetPath)
-            {
-                _abstractLogger = new XmlLogger(filePath);
-            }
+        if (_localLogger is not XmlLogger || _localLogger.FilePath != targetPath)
+        {
+            _localLogger = new XmlLogger(filePath);
+        }
+    }
+
+    private void CreateJsonDistantLogger(string serverName, int serverPort)
+    {
+        if (_distantLogger is not JsonDistantLogger || _distantLogger.ServerName != serverName || _distantLogger.ServerPort != serverPort)
+        {
+            _distantLogger = new JsonDistantLogger(serverName, serverPort);
+        }
+    }
+
+    private void CreateXmlDistantLogger(string serverName, int serverPort)
+    {
+        if (_distantLogger is not XmlDistantLogger || _distantLogger.ServerName != serverName || _distantLogger.ServerPort != serverPort)
+        {
+            _distantLogger = new XmlDistantLogger(serverName, serverPort);
         }
     }
 
     /// <summary>
-    /// Default easylog file
+    /// Old method, kept for backward compatibility, redirects to the new WriteMethod
     /// </summary>
-    /// <param name="filePath">Path of the file to save into</param>
-    /// <param name="content">Content to save</param>
-    /// <param name="type"> The type of logger to use ("Json", "Xml", ...)</param>
     public void Write(string filePath, Dictionary<string, object> content, string type)
+    {
+        Write(filePath, content, type, string.Empty, 0);
+    }
+
+    /// <summary>
+    /// WriteMethod
+    /// </summary>
+    /// <param name="filePath"> Path of the file you want to save the logfile in (useless if isDistant is true) </param>
+    /// <param name="content"> Dictionary containing the information to log </param>
+    /// <param name="type"> type in which the log file will be written </param>
+    /// <param name="serverName"> Defines the address to reach the server, leave blank to not use centralised login </param>
+    /// <param name="serverPort"> Defines the port to communicate with the server </param>
+    public void Write(string filePath, Dictionary<string, object> content, string type, string serverName = "", int serverPort = 0)
     {
         string format = (type ?? "json").ToLower();
 
-        switch (format)
+        lock (_lock)
         {
-            case ("json") :
+            if (!string.IsNullOrWhiteSpace(serverName) && serverPort > 0)
             {
-                CreateJsonLogger(filePath);
-                break;
+                switch (format)
+                {
+                    case "xml":
+                        CreateXmlDistantLogger(serverName, serverPort);
+                        break;
+                    default:
+                        CreateJsonDistantLogger(serverName, serverPort);
+                        break;
+                }
+                _distantLogger.SendToRemoteServer(content);
             }
-            case ("xml"):
-            {
-                CreateXmlLogger(filePath);
-                break;
-            }
-            default:
-            {
-                CreateJsonLogger(filePath);
-                break;
-            }
-        }
 
-        if (_abstractLogger is null)
-        {
-            throw new InvalidOperationException("Logger not initialized.");
+            if (!string.IsNullOrWhiteSpace(filePath))
+            {
+                switch (format)
+                {
+                    case "xml":
+                        CreateXmlLogger(filePath);
+                        break;
+                    default:
+                        CreateJsonLogger(filePath);
+                        break;
+                }
+                _localLogger.Write(content);
+            }
+
+            if (_localLogger == null && _distantLogger == null)
+                throw new InvalidOperationException("Logger not initialised, fatal error");
         }
-        _abstractLogger.Write(content);
     }
 }

@@ -1,8 +1,8 @@
 namespace EasyLog.Loggers;
 
 /*
-* Logger interface
-*/
+ * Logger interface
+ */
 
 public abstract class AbstractLogger
 {
