@@ -1,5 +1,5 @@
-using EasySave.Domain.Entities;
 using EasySave.Domain.Interfaces;
+using EasySave.Domain.Events;
 
 namespace EasySave.Infrastructure.Subscribers;
 
@@ -18,47 +18,48 @@ public class DailyLogger : ISubscriber
         string folderName = "Logs";
         string fileName = $"{DateTime.Now:yyyy-MM-dd}";
 
-        // ===== CHEMIN LOCAL =====
-        string local = Path.Combine(Directory.GetCurrentDirectory(), folderName, fileName);
-
-        return local;
-        // ===== /CHEMIN LOCAL =====
-
-        // ===== CHEMIN UNC =====
-
-        //string serveur = "";
-        //string unc = $@"\\{serveur}\{folderName}\{folderName}";
-        //return unc;
-
-        // ===== /CHEMIN UNC ====
+        return Path.Combine(Directory.GetCurrentDirectory(), folderName, fileName);
     }
 
-    public void Update(Context context)
+    public void Update(IBackupEvent backupEvent)
     {
-        if (context.TransferTime != TimeSpan.Zero)
+        switch (backupEvent)
         {
-            WriteToFile(context);
+            case FileTransferSuccess e:
+                WriteToFile(Serialize(e.Meta, e.File, e.TransferTime, e.EncryptTime, null));
+                break;
+            case FileTransferFailure e:
+                WriteToFile(Serialize(e.Meta, e.File, TimeSpan.FromSeconds(-1), TimeSpan.FromSeconds(-1), e.Reason));
+                break;
+            case BackupInterrupted e:
+                WriteToFile(Serialize(e.Meta, null, TimeSpan.FromSeconds(-1), TimeSpan.FromSeconds(-1), e.Reason));
+                break;
         }
     }
 
 
-    private Dictionary<string, object> Serialize(Context context)
+    private Dictionary<string, object> Serialize
+        (
+            EventMetadata meta,
+            BackupFileInfo? file, TimeSpan transferTime, TimeSpan encryptTime,
+            string? errorMessage
+        )
     {
         return new Dictionary<string, object>()
         {
-            { "DateJob", DateTimeOffset.FromUnixTimeSeconds(context.Timestamp).DateTime.ToString("yyyy-MM-dd HH:mm:ss")},
-            { "JobName", context.JobName },
-            { "SourcePath", context.SourcePath },
-            { "TargetPath", context.TargetPath },
-            { "FileSize", context.FileSize },
-            { "TransfertTime", context.TransferTime },
-            { "EncryptTime", context.EncryptTime },
-            { "StopReason", context.StopReason ?? string.Empty }
+            { "DateJob", DateTimeOffset.FromUnixTimeMilliseconds(meta.Timestamp).DateTime.ToString("yyyy-MM-dd HH:mm:ss") },
+            { "JobName", meta.JobName },
+            { "SourcePath", file?.SourcePath ?? string.Empty },
+            { "TargetPath", file?.TargetPath ?? string.Empty },
+            { "FileSize", file?.FileSize ?? 0 },
+            { "TransfertTime", transferTime },
+            { "EncryptTime", encryptTime },
+            { "ErrorMessage", errorMessage ?? string.Empty }
         };
     }
 
-private void WriteToFile(Context context)
+    private void WriteToFile(Dictionary<string, object> content)
     {
-        EasyLog.EasyLog.Instance.Write(GetLogFilePath(), Serialize(context), _logFileType);
+        EasyLog.EasyLog.Instance.Write(GetLogFilePath(), content, _logFileType);
     }
 }

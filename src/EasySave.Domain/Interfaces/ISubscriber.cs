@@ -1,8 +1,8 @@
-using EasySave.Domain.Entities;
+using EasySave.Domain.Events;
 
 namespace EasySave.Domain.Interfaces;
 
 public interface ISubscriber
 {
-    void Update(Context context);
+    void Update(IBackupEvent backupEvent);
 }

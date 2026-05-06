@@ -1,13 +1,14 @@
 using System.Diagnostics;
 
-using EasySave.Domain.Entities;
 using EasySave.Domain.Interfaces;
+using EasySave.Domain.Events;
 
 namespace EasySave.Domain.Strategies;
 
 public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 {
     private readonly IEncryptionService _encryptionService;
+    private readonly ISoftwareDetector? _softwareDetector;
 
     protected AbstractBackupStrategy(IEncryptionService encryptionService, ISoftwareDetector? softwareDetector = null)
     {
@@ -15,21 +16,21 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
         _softwareDetector = softwareDetector;
     }
 
+    // observer pattern code
+
     public List<ISubscriber> Subscribers { get; set; } = [];
 
-    private readonly ISoftwareDetector? _softwareDetector;
-
-    protected void Notify(Context context) // protected to prevent external classes from triggering notifications directly
+    protected void Notify(IBackupEvent e) // the protected scope prevents external classes from triggering notifications directly
     {
         foreach (var subscriber in Subscribers)
         {
-            subscriber.Update(context);
+            subscriber.Update(e);
         }
     }
-    public void ValidateSubscriber(ISubscriber subscriber)
+
+    private void ValidateSubscriber(ISubscriber subscriber)
     {
-        if (subscriber == null)
-            throw new ArgumentNullException(nameof(subscriber));
+        if (subscriber == null) throw new ArgumentNullException(nameof(subscriber));
     }
     public void Attach(ISubscriber subscriber)
     {
@@ -45,21 +46,42 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
         Subscribers.Remove(subscriber);
     }
 
-    protected IEnumerable<string> GetFiles(string directoryPath)
+    // boilerplate code for concrete strategies
+
+    protected IEnumerable<string> GetAllFiles(string directoryPath)
     {
         if (!Directory.Exists(directoryPath))
         {
             return [];
         }
-        return Directory.EnumerateFiles(directoryPath, "*", SearchOption.AllDirectories); // recursive search acting as a generator
+        return Directory.EnumerateFiles(directoryPath, "*", SearchOption.AllDirectories); // recursive search
     }
+
     protected string GetTargetFile(string sourcePath, string targetPath, string sourceFile)
     {
         var relativePath = Path.GetRelativePath(sourcePath, sourceFile);
         var targetFile = Path.Combine(targetPath, relativePath);
         return targetFile;
     }
-    protected TimeSpan CopyFile(string sourceFile, string targetFile)
+
+    protected abstract (List<string>, int, long) GetBackupFiles(string sourcePath, string targetPath);
+
+    // boilerplate code for execute() method
+
+    private bool IsSoftwareRunning(string jobName)
+    {
+        if (_softwareDetector?.IsSoftwareRunning() == true)
+        {
+            Notify(new BackupInterrupted(
+                new EventMetadata { JobName = jobName },
+                "Blocking business software is running"
+            ));
+            return true;
+        }
+        return false;
+    }
+
+    private TimeSpan CopyFile(string sourceFile, string targetFile)
     {
         var targetDirectory = Path.GetDirectoryName(targetFile);
         if (!string.IsNullOrEmpty(targetDirectory) && !Directory.Exists(targetDirectory))
@@ -67,63 +89,76 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
             Directory.CreateDirectory(targetDirectory);
         }
         var stopwatch = Stopwatch.StartNew();
-
+        
         try
         {
             File.Copy(sourceFile, targetFile, overwrite: true);
         }
-        catch
+        finally
         {
             stopwatch.Stop();
-            return TimeSpan.FromMilliseconds(-1); // return negative time if the copy operation fails
         }
-
-        stopwatch.Stop(); return stopwatch.Elapsed; // get float milliseconds with TimeSpan with (float)duration.TotalMilliseconds;
+         return stopwatch.Elapsed; // get float milliseconds with TimeSpan with (float)duration.TotalMilliseconds;
     }
 
-    protected abstract (List<string>, int, long) GetFilesToBackup(string sourcePath, string targetPath);
+    // main strategy execution method
 
     public void Execute(string jobName, string sourcePath, string targetPath, List<string> typesToEncrypt, string encryptKey)
     {
-        var (toBackup, count, size) = GetFilesToBackup(sourcePath, targetPath);
-        int remainingCount = count; long remainingSize = size;
+        if (IsSoftwareRunning(jobName)) return;
+
+        var (toBackup, count, size) = GetBackupFiles(sourcePath, targetPath);
+
+        int remainingCount = count;
+        long remainingSize = size;
 
         foreach (string sourceFile in toBackup)
         {
-            long fileSize = new FileInfo(sourceFile).Length;
+            if (IsSoftwareRunning(jobName)) break;
 
+            long fileSize = new FileInfo(sourceFile).Length;
             var targetFile = GetTargetFile(sourcePath, targetPath, sourceFile);
 
-            Context CreateContext(TimeSpan transferTime, TimeSpan encryptTime, string? stopReason = null)
-            {
-                return new Context(jobName: jobName, timestamp: new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(),
-                    sourcePath: sourceFile, targetPath: targetFile, fileSize: fileSize, transferTime: transferTime,
-                    totalCount: count, totalSize: size, remainingCount: remainingCount, remainingSize: remainingSize, encryptTime: encryptTime,
-                    stopReason: stopReason);
-             }
+            var fileInfo = new BackupFileInfo(sourceFile, fileSize, targetFile);
+            var beforeTransfer = new BackupProgress(count, remainingCount, size, remainingSize);
 
-            if (_softwareDetector?.IsSoftwareRunning() == true)
+            Notify(new FileTransferReady(
+                    new EventMetadata { JobName = jobName },
+                    fileInfo,
+                    beforeTransfer
+                ));
+
+            if (IsSoftwareRunning(jobName)) break;
+
+            TimeSpan transferTime = TimeSpan.Zero;
+
+            try
             {
-                Context contextStop = CreateContext(TimeSpan.FromMilliseconds(-1), TimeSpan.FromMilliseconds(0), stopReason: "business_software_running");
-                Notify(contextStop);
-                break;
+                transferTime = CopyFile(sourceFile, targetFile);
+            }
+            catch (Exception e)
+            {
+                Notify(new FileTransferFailure(
+                    new EventMetadata { JobName = jobName },
+                    fileInfo,
+                    e.Message,
+                    beforeTransfer
+                ));
+                continue;
             }
 
-            Context contextPreBackup = CreateContext(TimeSpan.Zero, TimeSpan.FromMilliseconds(0));
-            Notify(contextPreBackup);
-
-            TimeSpan transferTime = CopyFile(sourceFile, targetFile);
             remainingCount--; remainingSize -= fileSize;
 
-            TimeSpan encryptTime = TimeSpan.FromMilliseconds(0);
+            TimeSpan encryptTime = typesToEncrypt.Contains(Path.GetExtension(targetFile))
+                ? _encryptionService.Encrypt(targetFile, encryptKey) : TimeSpan.Zero;
 
-            if (typesToEncrypt.Contains(Path.GetExtension(targetFile)))
-            {
-                encryptTime = _encryptionService.Encrypt(targetFile, encryptKey);
-            }
+            Notify(new FileTransferSuccess(
+                    new EventMetadata { JobName = jobName },
+                    fileInfo, transferTime, encryptTime,
+                    new BackupProgress(count, remainingCount, size, remainingSize)
+                ));
 
-            Context contextPostBackup = CreateContext(transferTime, encryptTime);
-            Notify(contextPostBackup);
+            if (IsSoftwareRunning(jobName)) break;
         }
     }
 }
