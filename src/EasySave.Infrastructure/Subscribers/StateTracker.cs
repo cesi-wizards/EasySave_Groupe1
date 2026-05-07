@@ -26,14 +26,28 @@ public class StateTracker : ISubscriber
                 WriteToFile(Serialize(e.Meta, e.Progress, e.File, ActiveSaveStateEnum.ACTIVE));
                 break;
             case FileTransferSuccess e:
-                var state = e.Progress.RemainingCount == 0 ? ActiveSaveStateEnum.INACTIVE : ActiveSaveStateEnum.ACTIVE;
-                WriteToFile(Serialize(e.Meta, e.Progress, e.File, state));
+                WriteToFile(Serialize(e.Meta, e.Progress, e.File, ActiveSaveStateEnum.ACTIVE));
                 break;
             case FileTransferFailure e:
                 WriteToFile(Serialize(e.Meta, e.Progress, e.File, ActiveSaveStateEnum.ACTIVE));
                 break;
             case BackupInterrupted e:
                 WriteToFile(Serialize(e.Meta, null, null, ActiveSaveStateEnum.INACTIVE));
+                break;
+            case BackupCompleted e:
+                WriteToFile(new Dictionary<string, object>
+                {
+                    {"JobName", e.Meta.JobName},
+                    {"DateJob", DateTimeOffset.FromUnixTimeMilliseconds(e.Meta.Timestamp).DateTime.ToString("yyyy-MM-dd HH:mm:ss")},
+                    {"State", ActiveSaveStateEnumExtensions.GetStateLabel(ActiveSaveStateEnum.INACTIVE)},
+                    {"TotalFileCount", e.TotalFiles},
+                    {"TotalFileSize", e.TotalSize},
+                    {"Progression", $"{e.TotalFiles}/{e.TotalFiles} - (100%)"},
+                    {"RemainingFileCount", 0},
+                    {"RemainingFileSize", 0},
+                    {"SourcePath", string.Empty},
+                    {"TargetPath", string.Empty}
+                });
                 break;
         }
     }

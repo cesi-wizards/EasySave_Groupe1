@@ -27,12 +27,10 @@ public class SoftwareDetector : ISoftwareDetector
 
     public bool IsSoftwareRunning()
     {
-        Console.WriteLine(_processNames.Count);
         if (_processNames.Count == 0)
         {
             return false;
         }
-        Console.WriteLine(Process.GetProcessesByName(_processNames.First()));
         foreach (string name in _processNames)
         {
             if (Process.GetProcessesByName(name).Length > 0)

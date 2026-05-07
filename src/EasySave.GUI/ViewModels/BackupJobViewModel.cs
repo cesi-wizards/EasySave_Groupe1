@@ -47,7 +47,14 @@ public partial class BackupJobViewModel : ViewModelBase, ISubscriber
         {
             Dispatcher.UIThread.InvokeAsync(() =>
             {
-                Progress = 0;
+                CurrentFile = string.Empty;
+            });
+        }
+        else if (backupEvent is BackupCompleted)
+        {
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                Progress = 100;
                 CurrentFile = string.Empty;
             });
         }

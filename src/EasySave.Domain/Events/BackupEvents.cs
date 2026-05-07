@@ -33,3 +33,11 @@ public record BackupInterrupted
     string Reason
 )
 : IBackupEvent;
+
+public record BackupCompleted
+(
+    EventMetadata Meta,
+    int TotalFiles,
+    long TotalSize,
+    int FailedFiles
+) : IBackupEvent;

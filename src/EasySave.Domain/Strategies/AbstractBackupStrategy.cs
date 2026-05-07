@@ -89,7 +89,7 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
             Directory.CreateDirectory(targetDirectory);
         }
         var stopwatch = Stopwatch.StartNew();
-        
+
         try
         {
             File.Copy(sourceFile, targetFile, overwrite: true);
@@ -111,24 +111,25 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 
         int remainingCount = count;
         long remainingSize = size;
+        int failedCount = 0;
+        bool interrupted = false;
 
         foreach (string sourceFile in toBackup)
         {
-            if (IsSoftwareRunning(jobName)) break;
+            if (IsSoftwareRunning(jobName)) { interrupted = true; break; }
 
             long fileSize = new FileInfo(sourceFile).Length;
             var targetFile = GetTargetFile(sourcePath, targetPath, sourceFile);
 
             var fileInfo = new BackupFileInfo(sourceFile, fileSize, targetFile);
             var beforeTransfer = new BackupProgress(count, remainingCount, size, remainingSize);
-
             Notify(new FileTransferReady(
                     new EventMetadata { JobName = jobName },
                     fileInfo,
                     beforeTransfer
                 ));
 
-            if (IsSoftwareRunning(jobName)) break;
+            if (IsSoftwareRunning(jobName)) { interrupted = true; break; }
 
             TimeSpan transferTime = TimeSpan.Zero;
 
@@ -138,6 +139,7 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
             }
             catch (Exception e)
             {
+                failedCount++;
                 Notify(new FileTransferFailure(
                     new EventMetadata { JobName = jobName },
                     fileInfo,
@@ -158,7 +160,15 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
                     new BackupProgress(count, remainingCount, size, remainingSize)
                 ));
 
-            if (IsSoftwareRunning(jobName)) break;
+            if (IsSoftwareRunning(jobName)) { interrupted = true; break; }
+        }
+
+        if (!interrupted)
+        {
+            Notify(new BackupCompleted(
+                new EventMetadata { JobName = jobName },
+                count, size, failedCount
+            ));
         }
     }
 }
