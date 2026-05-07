@@ -1,5 +1,9 @@
 <Solution>
 
+    <Configurations>
+        <Platform Name="Any CPU" />
+    </Configurations>
+
     <Folder Name="/src/">
         <Project Path="src/EasyLog/EasyLog.csproj" />
         <Project Path="src/EasySave.Domain/EasySave.Domain.csproj" />
