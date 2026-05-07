@@ -29,6 +29,18 @@ public abstract class AbstractDistantLogger
             using var client = new TcpClient(ServerName, ServerPort);
             using NetworkStream stream = client.GetStream();
             stream.Write(data, 0, data.Length);
+
+            client.Client.Shutdown(SocketShutdown.Send);
+
+            // Treating response from server
+            byte[] responseBuffer  = new byte[1024];
+            int bytesRead = stream.Read(responseBuffer, 0, responseBuffer.Length);
+
+            string response = Encoding.UTF8.GetString(responseBuffer, 0, bytesRead);
+            if (response != "OK")
+            {
+                Console.WriteLine($"[-] Server returned an error: {response}");
+            }
         }
         catch (SocketException socketException)
         {

@@ -2,12 +2,13 @@
 using System.Net.Sockets;
 using System.Text;
 
-class Program
+namespace EasySaveServer;
+internal sealed class Program
 {
-    static async Task Main(string[] args)
+    private static async Task Main()
     {
         int port = 11000;
-        TcpListener listener = new TcpListener(IPAddress.Any, port);
+        var listener = new TcpListener(IPAddress.Any, port);
 
         try
         {
@@ -22,7 +23,7 @@ class Program
                 _ = Task.Run(() => HandleClientAsync(client));
             }
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine($"[Server Error]: {ex.Message}");
         }
@@ -30,51 +31,87 @@ class Program
 
     private static async Task HandleClientAsync(TcpClient client)
     {
-        try
+        using (client)
+        await using (NetworkStream stream = client.GetStream())
         {
-            using (client)
-            using (NetworkStream stream = client.GetStream())
+            try
             {
-
-                // read incoming message
-                byte[] buffer = new byte[8192]; // Stocks the incoming message
-                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
-
-                if (bytesRead > 0)
+                // Read the full stream until the client closes the connection
+                byte[] buffer = new byte[8192];
+                using var ms = new MemoryStream();
+                int bytesRead;
+                while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                 {
-                    string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                    await ms.WriteAsync(buffer, 0, bytesRead);
+                }
 
-                    Console.WriteLine($"[Log  @{DateTime.Now}] : {message}");
+                string message = Encoding.UTF8.GetString(ms.ToArray());
 
-                    Dictionary<string, object> content = System.Text.Json.JsonSerializer
-                                                             .Deserialize<Dictionary<string, object>>(message)
-                                                         ?? new Dictionary<string, object> { { "raw", message } };
-                    string logType = "json";
+                if (string.IsNullOrWhiteSpace(message))
+                {
+                    await SendResponseAsync(stream, "ERROR:EMPTY_MESSAGE");
+                    return;
+                }
 
-                    if (content.TryGetValue("LogType", out object? logTypeValue))
-                    {
-                        logType = logTypeValue?.ToString() ?? "json";
-                    }
+                Console.WriteLine($"[Log @{DateTime.Now}] : {message}");
 
-                    EasyLog.EasyLog.Instance.Write(GetLogFilePath(), content, logType);
+                Dictionary<string, object> content;
+                try
+                {
+                    content = System.Text.Json.JsonSerializer
+                                  .Deserialize<Dictionary<string, object>>(message)
+                              ?? new Dictionary<string, object> { { "raw", message } };
+                }
+                catch (System.Text.Json.JsonException)
+                {
+                    await SendResponseAsync(stream, "ERROR:INVALID_JSON");
+                    return;
+                }
+
+                string logType = "json";
+                if (content.TryGetValue("LogType", out object? logTypeValue))
+                {
+                    logType = logTypeValue?.ToString() ?? "json";
+                }
+
+                EasyLog.EasyLog.Instance.Write(GetLogFilePath(), content, logType);
+
+                await SendResponseAsync(stream, "OK");
+            }
+            catch (SocketException ex)
+            {
+                Console.WriteLine($"[Socket error]: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR]: {ex.Message}");
+                try
+                {
+                    await SendResponseAsync(stream, "ERROR:INTERNAL");
+                }
+                catch
+                {
+                    Console.WriteLine($"[ERROR] couldn't notify client of failure");
                 }
             }
         }
-        catch (SocketException socketException)
-        {
-            Console.WriteLine($"[Socket error] : ex: {socketException.Message}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[ERREUR]: {ex.Message}");
-        }
+    }
+
+    /// <summary>
+    /// Sends a response code back to the client
+    /// </summary>
+    /// <param name="stream"> The network stream to write to </param>
+    /// <param name="response"> The response code to send (OK, ERROR:...) </param>
+    private static async Task SendResponseAsync(NetworkStream stream, string response)
+    {
+        byte[] responseBytes = Encoding.UTF8.GetBytes(response);
+        await stream.WriteAsync(responseBytes, 0, responseBytes.Length);
     }
 
     private static string GetLogFilePath()
     {
         string folderName = "logs";
         string fileName = $"{DateTime.Now:yyyy-MM-dd}";
-        string local = Path.Combine(Directory.GetCurrentDirectory(), folderName, fileName);
-        return local;
+        return Path.Combine(Directory.GetCurrentDirectory(), folderName, fileName);
     }
 }
