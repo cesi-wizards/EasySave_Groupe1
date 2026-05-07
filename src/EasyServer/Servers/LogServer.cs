@@ -86,7 +86,7 @@ public sealed class LogServer(int port)
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR]: {ex.Message}");
+                Debug.WriteLine($"[ERROR]: {ex.Message}");
                 try
                 {
                     await SendResponseAsync(stream, "ERROR:INTERNAL");
