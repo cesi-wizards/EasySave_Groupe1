@@ -21,7 +21,6 @@ RUN dotnet build "EasySaveServer.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-# On retire le UseAppHost=false pour éviter l'erreur NETSDK1067 si tu es en Self-Contained
 RUN dotnet publish "EasySaveServer.csproj" -c $BUILD_CONFIGURATION -o /app/publish
 
 FROM base AS final
