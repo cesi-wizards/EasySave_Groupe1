@@ -1,7 +1,8 @@
 using System.Text.Json;
-using EasySave.Domain.Entities;
-using EasySave.Domain.Enum;
+using System.Linq;
 using EasySave.Domain.Interfaces;
+using EasySave.Domain.Enum;
+using EasySave.Domain.Events;
 
 namespace EasySave.Infrastructure.Subscribers;
 
@@ -14,66 +15,73 @@ public class StateTracker : ISubscriber
         string folderName = "Logs";
         string fileName = "states.json";
 
-        // ===== CHEMIN LOCAL =====
-        string local = Path.Combine(Directory.GetCurrentDirectory(), folderName, fileName);
-
-        return local;
-        // ===== CHEMIN LOCAL =====
-
-        // ===== CHEMIN UNC =====
-        /*
-            string serveur = "";
-            string unc = &@"\\{serveur}\{folderName}\{folderName}";
-            return unc;
-        */
-        // ===== CHEMIN UNC ====
+        return Path.Combine(Directory.GetCurrentDirectory(), folderName, fileName);
     }
 
-    public void Update(Context context)
+    public void Update(IBackupEvent backupEvent)
     {
-        WriteToFile(Serialize(context));
-    }
-
-    private Dictionary<string, object> Serialize(Context context)
-    {
-        if(context.RemainingCount == 0)
+        switch (backupEvent)
         {
-            return new Dictionary<string, object>()
-            {
-                {"JobName", context.JobName },
-                {"DateJob", DateTimeOffset.FromUnixTimeSeconds(context.Timestamp).DateTime.ToString("yyyy-MM-dd HH:mm:ss")},
-                {"State", ActiveSaveStateEnumExtensions.GetStateLabel(ActiveSaveStateEnum.INACTIVE) },
-
-                {"TotalFileCount", 0 },
-                {"TotalFileSize", 0 },
-                {"Progression", "0" },
-                {"RemainingFileCount", 0 },
-                {"RemainingFileSize", 0},
-                {"SourcePath", string.Empty },
-                {"TargetPath", string.Empty }
-            };
+            case FileTransferReady e:
+                WriteToFile(Serialize(e.Meta, e.Progress, e.File, ActiveSaveStateEnum.ACTIVE));
+                break;
+            case FileTransferSuccess e:
+                WriteToFile(Serialize(e.Meta, e.Progress, e.File, ActiveSaveStateEnum.ACTIVE));
+                break;
+            case FileTransferFailure e:
+                WriteToFile(Serialize(e.Meta, e.Progress, e.File, ActiveSaveStateEnum.ACTIVE));
+                break;
+            case BackupInterrupted e:
+                WriteToFile(Serialize(e.Meta, null, null, ActiveSaveStateEnum.INACTIVE));
+                break;
+            case BackupCompleted e:
+                WriteToFile(new Dictionary<string, object>
+                {
+                    {"JobName", e.Meta.JobName},
+                    {"DateJob", DateTimeOffset.FromUnixTimeMilliseconds(e.Meta.Timestamp).DateTime.ToString("yyyy-MM-dd HH:mm:ss")},
+                    {"State", ActiveSaveStateEnumExtensions.GetStateLabel(ActiveSaveStateEnum.INACTIVE)},
+                    {"TotalFileCount", e.TotalFiles},
+                    {"TotalFileSize", e.TotalSize},
+                    {"Progression", $"{e.TotalFiles}/{e.TotalFiles} - (100%)"},
+                    {"RemainingFileCount", 0},
+                    {"RemainingFileSize", 0},
+                    {"SourcePath", string.Empty},
+                    {"TargetPath", string.Empty}
+                });
+                break;
         }
+    }
 
-        int actualFile = context.TotalCount - context.RemainingCount;
-        int percent = context.TotalCount > 0
-            ? (int)((double)actualFile / context.TotalCount * 100)
-            : 0;
+    private Dictionary<string, object> Serialize
+        (
+            EventMetadata meta,
+            BackupProgress? progress,
+            BackupFileInfo? file,
+            ActiveSaveStateEnum state
+        )
+    {
+        int totalCount = progress?.TotalCount ?? 0;
+        int remainingCount = progress?.RemainingCount ?? 0;
+        long totalSize = progress?.TotalSize ?? 0;
+        long remainingSize = progress?.RemainingSize ?? 0;
 
-        string progression = $"{actualFile}/{context.TotalCount} - ({percent}%)";
+        int actualFile = totalCount - remainingCount;
+        int percent = totalCount > 0 ? (int)((double)actualFile / totalCount * 100) : 0;
+        string progression = $"{actualFile}/{totalCount} - ({percent}%)";
 
         return new Dictionary<string, object>()
         {
-            {"JobName", context.JobName },
-            {"DateJob", DateTimeOffset.FromUnixTimeSeconds(context.Timestamp).DateTime.ToString("yyyy-MM-dd HH:mm:ss") },
-            {"State", ActiveSaveStateEnumExtensions.GetStateLabel(ActiveSaveStateEnum.ACTIVE) },
+            {"JobName", meta.JobName },
+            {"DateJob", DateTimeOffset.FromUnixTimeMilliseconds(meta.Timestamp).DateTime.ToString("yyyy-MM-dd HH:mm:ss") },
+            {"State", ActiveSaveStateEnumExtensions.GetStateLabel(state) },
 
-            {"TotalFileCount", context.TotalCount },
-            {"TotalFileSize", context.TotalSize },
+            {"TotalFileCount", totalCount },
+            {"TotalFileSize", totalSize },
             {"Progression", progression },
-            {"RemainingFileCount", context.RemainingCount },
-            {"RemainingFileSize", context.RemainingSize },
-            {"SourcePath", context.SourcePath },
-            {"TargetPath", context.TargetPath }
+            {"RemainingFileCount", remainingCount },
+            {"RemainingFileSize", remainingSize },
+            {"SourcePath", file?.SourcePath ?? string.Empty },
+            {"TargetPath", file?.TargetPath ?? string.Empty }
         };
     }
 
@@ -81,18 +89,16 @@ public class StateTracker : ISubscriber
     {
         try
         {
-            // options for the serialization
             var options = new JsonSerializerOptions
             {
-                WriteIndented = true, // pretty-prints the JSON
-                PropertyNamingPolicy = null // keep the name of the keys
+                WriteIndented = true,
+                PropertyNamingPolicy = null
             };
 
             return JsonSerializer.Serialize(infoContext, options);
         }
         catch (Exception)
         {
-            // In case of an exception
             return "{}";
         }
     }
@@ -137,9 +143,8 @@ public class StateTracker : ISubscriber
 
                 Dictionary<string, object>? item = states.FirstOrDefault(state => state.ContainsKey("JobName") && state["JobName"].ToString() == infoContext["JobName"].ToString());
 
-                if(item != null)
+                if (item != null)
                 {
-                    // mapping
                     item["JobName"] = infoContext["JobName"];
                     item["DateJob"] = infoContext["DateJob"];
                     item["State"] = infoContext["State"];

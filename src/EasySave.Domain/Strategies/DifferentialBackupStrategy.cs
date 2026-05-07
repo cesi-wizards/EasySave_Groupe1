@@ -8,13 +8,12 @@ namespace EasySave.Domain.Strategies;
 public class DifferentialBackupStrategy(IEncryptionService encryptionService, ISoftwareDetector? softwareDetector = null)
     : AbstractBackupStrategy(encryptionService, softwareDetector)
 {
-
-    protected override (List<string>, int, long) GetFilesToBackup(string sourcePath, string targetPath)
+    protected override (List<string>, int, long) GetBackupFiles(string sourcePath, string targetPath)
     {
         var toBackup = new List<string>();
         int count = 0; long size = 0;
 
-        foreach (string sourceFile in GetFiles(sourcePath)) // GetFiles() returns a generator so it won't load unused files into memory
+        foreach (string sourceFile in GetAllFiles(sourcePath)) // GetFiles() returns a generator so it won't load unused files into memory
         {
             string targetFile = GetTargetFile(sourcePath, targetPath, sourceFile);
 

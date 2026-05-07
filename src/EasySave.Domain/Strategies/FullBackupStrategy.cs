@@ -7,12 +7,12 @@ public class FullBackupStrategy(IEncryptionService encryptionService, ISoftwareD
     : AbstractBackupStrategy(encryptionService, softwareDetector)
 {
 
-    protected override (List<string>, int, long) GetFilesToBackup(string sourcePath, string targetPath)
+    protected override (List<string>, int, long) GetBackupFiles(string sourcePath, string targetPath)
     {
         var toBackup = new List<string>();
         int count = 0; long size = 0;
 
-        foreach (string sourceFile in GetFiles(sourcePath))
+        foreach (string sourceFile in GetAllFiles(sourcePath))
         {
             toBackup.Add(sourceFile);
             count++;
