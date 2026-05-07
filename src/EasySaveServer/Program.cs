@@ -72,7 +72,8 @@ class Program
 
     private static string GetLogFilePath()
     {
-        string folderName = "Logs";        string fileName = $"{DateTime.Now:yyyy-MM-dd}";
+        string folderName = "logs";
+        string fileName = $"{DateTime.Now:yyyy-MM-dd}";
         string local = Path.Combine(Directory.GetCurrentDirectory(), folderName, fileName);
         return local;
     }
