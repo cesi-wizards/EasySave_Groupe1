@@ -2,7 +2,6 @@
 WORKDIR /app
 USER root
 RUN mkdir -p /app/logs && chown -R $APP_UID:$APP_UID /app/logs
-# Optionnel : USER $APP_UID
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
@@ -14,7 +13,6 @@ RUN dotnet restore "src/EasyServer/EasyServer.csproj"
 
 WORKDIR "/src/src/EasyServer"
 
-# Nettoyage complet des options de publication
 RUN dotnet publish "EasyServer.csproj" -c $BUILD_CONFIGURATION -o /app/publish \
     /p:UseAppHost=false \
     /p:PublishSingleFile=false \
