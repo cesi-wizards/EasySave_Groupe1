@@ -1,9 +1,5 @@
 namespace EasyLog.Loggers;
 
-/*
- * Logger interface
- */
-
 public abstract class AbstractLogger
 {
     public string FilePath { get; protected set; }
