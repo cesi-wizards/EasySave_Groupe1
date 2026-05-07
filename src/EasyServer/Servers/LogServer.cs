@@ -1,32 +1,34 @@
-﻿using System.Net;
+using System.Diagnostics;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
-namespace EasySaveServer;
-internal sealed class Program
+namespace EasyServer.Servers;
+
+public sealed class LogServer(int port)
 {
-    private static async Task Main()
+    private readonly TcpListener _listener = new TcpListener(IPAddress.Any, port);
+    private bool _isRunning;
+
+    public async Task StartAsync(CancellationToken ct = default)
     {
-        int port = 11000;
-        var listener = new TcpListener(IPAddress.Any, port);
+        _listener.Start();
+        _isRunning = true;
+        Debug.WriteLine($"[*] Centralised Log Server listening on port : {port}...");
 
         try
         {
-            listener.Start();
-            Console.WriteLine($"[*] Centralised Log Server listening on port : {port}...");
-
-            while (true)
+            while (!ct.IsCancellationRequested && _isRunning)
             {
-                // Waiting for a connection in an asynchronous method
-                TcpClient client = await listener.AcceptTcpClientAsync();
-
-                _ = Task.Run(() => HandleClientAsync(client));
+                TcpClient client = await _listener.AcceptTcpClientAsync(ct);
+                _ = Task.Run(() => HandleClientAsync(client), ct);
             }
         }
-        catch (Exception ex)
+        catch (OperationCanceledException)
         {
-            Console.WriteLine($"[Server Error]: {ex.Message}");
+            Debug.WriteLine($"Operation canceled");
         }
+        finally { _listener.Stop(); }
     }
 
     private static async Task HandleClientAsync(TcpClient client)
@@ -53,7 +55,7 @@ internal sealed class Program
                     return;
                 }
 
-                Console.WriteLine($"[Log @{DateTime.Now}] : {message}");
+                Debug.WriteLine($"[Log @{DateTime.Now}] : {message}");
 
                 Dictionary<string, object> content;
                 try
@@ -80,7 +82,7 @@ internal sealed class Program
             }
             catch (SocketException ex)
             {
-                Console.WriteLine($"[Socket error]: {ex.Message}");
+                Debug.WriteLine($"[Socket error]: {ex.Message}");
             }
             catch (Exception ex)
             {
@@ -91,17 +93,12 @@ internal sealed class Program
                 }
                 catch
                 {
-                    Console.WriteLine($"[ERROR] couldn't notify client of failure");
+                    Debug.WriteLine($"[ERROR] couldn't notify client of failure");
                 }
             }
         }
     }
 
-    /// <summary>
-    /// Sends a response code back to the client
-    /// </summary>
-    /// <param name="stream"> The network stream to write to </param>
-    /// <param name="response"> The response code to send (OK, ERROR:...) </param>
     private static async Task SendResponseAsync(NetworkStream stream, string response)
     {
         byte[] responseBytes = Encoding.UTF8.GetBytes(response);

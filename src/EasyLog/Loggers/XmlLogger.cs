@@ -2,12 +2,10 @@ using System.Xml.Linq;
 
 namespace EasyLog.Loggers;
 
-public class XmlLogger : AbstractLogger
+public class XmlLogger(string filePath) : AbstractLogger(FilePathToXmlPath(filePath))
 {
     // Locker for multithreading
     private static readonly object _lock = new();
-
-    public XmlLogger(string filePath) : base(FilePathToXmlPath(filePath)) {}
 
     public override void Write(Dictionary<string, object> dictionaryContent)
     {

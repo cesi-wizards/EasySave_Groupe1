@@ -1,6 +1,5 @@
 namespace EasyLog.Loggers;
 
-public class JsonDistantLogger : AbstractDistantLogger
+public class JsonDistantLogger(string serverName, int serverPort) : AbstractDistantLogger(serverName, serverPort, "json")
 {
-    public JsonDistantLogger(string serverName, int serverPort) : base(serverName, serverPort, "json") { }
 }

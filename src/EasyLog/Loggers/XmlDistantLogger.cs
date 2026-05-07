@@ -1,6 +1,5 @@
 namespace EasyLog.Loggers;
 
-public class XmlDistantLogger :  AbstractDistantLogger
+public class XmlDistantLogger(string serverName, int serverPort) :  AbstractDistantLogger (serverName, serverPort, "xml")
 {
-    public XmlDistantLogger(string serverName, int serverPort) : base(serverName, serverPort, "xml") { }
 }

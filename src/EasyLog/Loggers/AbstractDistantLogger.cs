@@ -1,22 +1,17 @@
+using System.Diagnostics;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.RegularExpressions;
 using EasyLog.Serializers;
 
 namespace EasyLog.Loggers;
 
-public abstract class AbstractDistantLogger
+public abstract class AbstractDistantLogger(string serverName, int serverPort, string type)
 {
-    private readonly string _type;
-    public string ServerName { get; protected set; }
-    public int ServerPort { get; protected set; }
+    public string ServerName { get; init; } = serverName;
+    public int ServerPort { get; init; } = serverPort;
 
-    protected AbstractDistantLogger(string serverName, int serverPort, string type)
-    {
-        ServerName = serverName ?? throw new ArgumentNullException(nameof(serverName));
-        ServerPort = serverPort;
-        _type = type;
-    }
 
     public void SendToRemoteServer(Dictionary<string, object> dictionaryContent)
     {
@@ -39,12 +34,12 @@ public abstract class AbstractDistantLogger
             string response = Encoding.UTF8.GetString(responseBuffer, 0, bytesRead);
             if (response != "OK")
             {
-                Console.WriteLine($"[-] Server returned an error: {response}");
+                Debug.WriteLine($"[-] Server returned an error: {response}");
             }
         }
-        catch (SocketException socketException)
+        catch (SocketException ex)
         {
-            Console.WriteLine("[-] Impossible to contact distant server for the centralisation of logs. " + socketException.Message);
+            Debug.WriteLine("[-] Impossible to contact distant server for the centralisation of logs. " + ex.Message);
         }
     }
 
@@ -69,7 +64,7 @@ public abstract class AbstractDistantLogger
     {
         var dictionaryToReturn = new Dictionary<string, object>(baseDictionary);
 
-        dictionaryToReturn.TryAdd("LogType", _type);
+        dictionaryToReturn.TryAdd("LogType", type);
 
         return dictionaryToReturn;
     }
@@ -89,6 +84,10 @@ public abstract class AbstractDistantLogger
             .Where(nic => nic.OperationalStatus == OperationalStatus.Up && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback)
             .Select(nic => nic.GetPhysicalAddress().ToString())
             .FirstOrDefault();
-        return mac ?? "000000000000";
+        if (string.IsNullOrEmpty(mac))
+        {
+            return "00:00:00:00:00:00";
+        }
+        return Regex.Replace(mac, ".{2}", "$0:").TrimEnd(':');
     }
 }

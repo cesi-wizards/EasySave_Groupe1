@@ -1,0 +1,11 @@
+﻿services:
+  easyserver:
+    image: easyserver
+    build:
+      context: .
+      dockerfile: src/EasyServer/Dockerfile
+    container_name: easyserver
+    ports:
+      - "11000:11000"
+    volumes:
+      - ./logs:/app/logs

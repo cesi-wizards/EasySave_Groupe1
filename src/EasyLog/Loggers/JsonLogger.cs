@@ -2,12 +2,10 @@ using EasyLog.Serializers;
 
 namespace EasyLog.Loggers;
 
-public class JsonLogger : AbstractLogger
+public class JsonLogger(string filePath) : AbstractLogger(FilePathToJsonLinePath(filePath))
 {
     // Locker for multithreading
     private static readonly object _lock = new();
-
-    public JsonLogger(string filePath) : base(FilePathToJsonLinePath(filePath)) {}
 
     public override void Write(Dictionary<string, object> dictionaryContent)
     {
