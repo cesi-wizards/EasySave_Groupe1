@@ -64,7 +64,7 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
         return targetFile;
     }
 
-    protected abstract (List<string>, int, long) GetBackupFiles(string sourcePath, string targetPath);
+    protected abstract (List<string> files, int totalCount, long totalSize) GetBackupFiles(string sourcePath, string targetPath);
 
     // boilerplate code for execute() method
 
