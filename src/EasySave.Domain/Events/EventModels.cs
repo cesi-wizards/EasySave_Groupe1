@@ -1,6 +1,6 @@
 namespace EasySave.Domain.Events;
 
-public class EventMetadata
+public record EventMetadata
 {
     public required string JobName { get; init; }
     public long Timestamp { get; init; } = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
