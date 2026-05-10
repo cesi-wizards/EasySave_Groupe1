@@ -37,11 +37,11 @@ public partial class MainWindowViewModel : ViewModelBase
         BackupJobs.Remove(jobVm);
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task ExecuteJob(BackupJobViewModel jobVm)
     {
         jobVm.Progress = 0;
         jobVm.CurrentFile = string.Empty;
-        await Task.Run(() => _jobManager.ExecuteJob(jobVm.Config.Name));
+        await _jobManager.ExecuteJob(jobVm.Config.Name);
     }
 }

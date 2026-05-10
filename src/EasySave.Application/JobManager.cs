@@ -1,3 +1,6 @@
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
+
 using EasySave.Domain.Entities;
 using EasySave.Domain.Interfaces;
 using EasySave.Infrastructure.Factories;
@@ -13,6 +16,8 @@ public class JobManager
 
     private readonly List<string> _businessSoftwares;
     private readonly ISoftwareDetector _softwareDetector;
+
+    private readonly ConcurrentDictionary<string, Task> _runningJobs = new();
 
     public JobManager(List<string>? businessSoftwares = null)
     {
@@ -59,10 +64,33 @@ public class JobManager
         _softwareDetector.UpdateProcessNames(_businessSoftwares);
     }
 
-    public void ExecuteJob(string name)
+    public Task ExecuteJob(string name)
     {
+        if (_runningJobs.ContainsKey(name))
+        {
+            return _runningJobs[name];
+        }
+
         BackupJob? job = Jobs.Find(j => j.Name == name);
-        job?.Execute();
+        if (job == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var task = Task.Run(() =>
+        {
+            try
+            {
+                job.Execute();
+            }
+            finally
+            {
+                _runningJobs.TryRemove(name, out _);
+            }
+        });
+
+        _runningJobs[name] = task;
+        return task;
     }
 
     public void ExecuteJobs()
