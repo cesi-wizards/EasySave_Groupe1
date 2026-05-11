@@ -18,6 +18,7 @@ public class JobManager
     private readonly ISoftwareDetector _softwareDetector;
 
     private readonly ConcurrentDictionary<string, Task> _runningJobs = new();
+    private readonly ConcurrentDictionary<string, ManualResetEvent> _pauseEvents = new();
 
     public JobManager(List<string>? businessSoftwares = null)
     {
@@ -77,15 +78,18 @@ public class JobManager
             return Task.CompletedTask;
         }
 
+        var pauseEvent = _pauseEvents.GetOrAdd(name, _ => new ManualResetEvent(true));
+
         var task = Task.Run(() =>
         {
             try
             {
-                job.Execute();
+                job.Execute(pauseEvent);
             }
             finally
             {
                 _runningJobs.TryRemove(name, out _);
+                _pauseEvents.TryRemove(name, out _);
             }
         });
 
@@ -93,11 +97,31 @@ public class JobManager
         return task;
     }
 
+    public void PauseJob(string name)
+    {
+        if (_pauseEvents.TryGetValue(name, out var pauseEvent))
+        {
+            pauseEvent.Reset();
+        }
+    }
+
+    public void ResumeJob(string name)
+    {
+        if (_pauseEvents.TryGetValue(name, out var pauseEvent))
+        {
+            pauseEvent.Set();
+        }
+    }
+
     public void ExecuteJobs()
     {
         foreach (BackupJob job in Jobs)
         {
-            job.Execute();
+            var pauseEvent = _pauseEvents.GetOrAdd
+            (
+                job.Name, _ => new ManualResetEvent(true)
+            );
+            job.Execute(pauseEvent);
         }
     }
 }

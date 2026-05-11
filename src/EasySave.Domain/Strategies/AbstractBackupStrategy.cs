@@ -103,7 +103,7 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 
     // main strategy execution method
 
-    public void Execute(string jobName, string sourcePath, string targetPath, List<string> typesToEncrypt, string encryptKey)
+    public void Execute(string jobName, string sourcePath, string targetPath, List<string> typesToEncrypt, string encryptKey, ManualResetEvent pauseEvent)
     {
         if (IsSoftwareRunning(jobName)) return;
 
@@ -116,6 +116,8 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 
         foreach (string sourceFile in toBackup)
         {
+            pauseEvent.WaitOne();
+
             if (IsSoftwareRunning(jobName)) { interrupted = true; break; }
 
             long fileSize = new FileInfo(sourceFile).Length;
