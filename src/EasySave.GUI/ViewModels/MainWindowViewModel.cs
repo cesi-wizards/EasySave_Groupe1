@@ -30,37 +30,43 @@ public partial class MainWindowViewModel : ViewModelBase
         _jobManager.SetBusinessSoftwares(softwares);
     }
 
+    [RelayCommand(AllowConcurrentExecutions = true)]
+    private async Task RunOrPauseJob(BackupJobViewModel jobVm)
+    {
+        if (jobVm.IsRunning)
+        {
+            if (jobVm.IsPaused)
+            {
+                _jobManager.ResumeJob(jobVm.Config.Name);
+                jobVm.IsPaused = false;
+            }
+            else
+            {
+                _jobManager.PauseJob(jobVm.Config.Name);
+                jobVm.IsPaused = true;
+            }
+
+            return;
+        }
+
+        jobVm.Progress = 0;
+        jobVm.CurrentFile = string.Empty;
+
+        jobVm.IsPaused = false;
+        jobVm.IsRunning = true;
+
+        _jobManager.ResumeJob(jobVm.Config.Name);
+
+        await _jobManager.ExecuteJob(jobVm.Config.Name);
+
+        jobVm.IsRunning = false;
+        jobVm.IsPaused = false;
+    }
+
     [RelayCommand]
     private void RemoveJob(BackupJobViewModel jobVm)
     {
         _jobManager.RemoveJob(jobVm.Config.Name);
         BackupJobs.Remove(jobVm);
-    }
-
-    [RelayCommand(AllowConcurrentExecutions = true)]
-    private async Task ExecuteJob(BackupJobViewModel jobVm)
-    {
-        jobVm.Progress = 0;
-        jobVm.CurrentFile = string.Empty;
-
-        jobVm.IsPaused = false;
-        _jobManager.ResumeJob(jobVm.Config.Name);
-
-        await _jobManager.ExecuteJob(jobVm.Config.Name);
-    }
-
-    [RelayCommand]
-    private void TogglePauseJob(BackupJobViewModel jobVm)
-    {
-        if (jobVm.IsPaused)
-        {
-            _jobManager.ResumeJob(jobVm.Config.Name);
-            jobVm.IsPaused = false;
-        }
-        else
-        {
-            _jobManager.PauseJob(jobVm.Config.Name);
-            jobVm.IsPaused = true;
-        }
     }
 }

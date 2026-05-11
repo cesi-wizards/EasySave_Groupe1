@@ -42,20 +42,13 @@
                         </StackPanel>
 
                         <Button Grid.Column="1"
-                                Content="▶"
-                                Margin="18,0,0,0"
-                                VerticalAlignment="Center"
-                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ExecuteJobCommand}"
-                                CommandParameter="{Binding}"/>
-                        
-                        <Button Grid.Column="2"
                                 Content="{Binding PauseButtonText}"
                                 Margin="12,0,0,0"
                                 VerticalAlignment="Center"
-                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TogglePauseJobCommand}"
+                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RunOrPauseJobCommand}"
                                 CommandParameter="{Binding}"/>
                         
-                        <Button Grid.Column="3"
+                        <Button Grid.Column="2"
                                 Content="✕"
                                 Margin="6,0,0,0"
                                 VerticalAlignment="Center"
