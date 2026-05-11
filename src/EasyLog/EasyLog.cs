@@ -100,7 +100,7 @@ public class EasyLog : IEasyLog
     /// <param name="type"> type in which the log file will be written </param>
     /// <param name="serverName"> Defines the address to reach the server, leave blank to not use centralized login </param>
     /// <param name="serverPort"> Defines the port to communicate with the server </param>
-    public void Write(string filePath, Dictionary<string, object> content, string type, string serverName = "", int serverPort = 0)
+    public void Write(string filePath, Dictionary<string, object> content, string type, string serverName="", int serverPort=0)
     {
         string format = type.ToLower();
 
@@ -113,7 +113,7 @@ public class EasyLog : IEasyLog
                 {
                     throw new InvalidOperationException("DistantLogger wasn't initialised when requesting distant log saving, fatal error");
                 }
-                _distantLogger.SendToRemoteServer(content);
+                _distantLogger.SendToRemoteServerAsync(content).GetAwaiter().GetResult();
             }
 
             if (!string.IsNullOrWhiteSpace(filePath))

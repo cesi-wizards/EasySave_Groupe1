@@ -12,36 +12,114 @@ public abstract class AbstractDistantLogger(string serverName, int serverPort, s
     public string ServerName { get; init; } = serverName;
     public int ServerPort { get; init; } = serverPort;
 
+    private TcpClient? _client;
+    private NetworkStream? _stream;
+    private readonly SemaphoreSlim _semaphore = new(1,1);
+    private const int _connectionTimeoutMs = 5000;
+    // ------------------------------
+    // Connection to the server
+    // ------------------------------
 
-    public void SendToRemoteServer(Dictionary<string, object> dictionaryContent)
+    public async Task SendToRemoteServerAsync(Dictionary<string, object> dictionaryContent)
     {
+        await _semaphore.WaitAsync();
         try
         {
+            await EnsureConnectedAsync();
+
             string payload = FormatDictionary(dictionaryContent);
-            byte[] data = Encoding.UTF8.GetBytes(payload);
+            byte[] data    = Encoding.UTF8.GetBytes(payload);
 
-            // Tcp connection and transfer to server
-            using var client = new TcpClient(ServerName, ServerPort);
-            using NetworkStream stream = client.GetStream();
-            stream.Write(data, 0, data.Length);
+            // --- Protocol: write 4-byte big-endian length header then payload
+            byte[] header = BitConverter.GetBytes(data.Length);
+            if (BitConverter.IsLittleEndian) Array.Reverse(header); // enforce big-endian
 
-            client.Client.Shutdown(SocketShutdown.Send);
+            await _stream!.WriteAsync(header);
+            await _stream!.WriteAsync(data);
 
-            // Treating response from server
-            byte[] responseBuffer  = new byte[1024];
-            int bytesRead = stream.Read(responseBuffer, 0, responseBuffer.Length);
-
-            string response = Encoding.UTF8.GetString(responseBuffer, 0, bytesRead);
+            // --- Read response
+            string response = await ReadResponseAsync();
             if (response != "OK")
-            {
                 Debug.WriteLine($"[-] Server returned an error: {response}");
-            }
         }
         catch (SocketException ex)
         {
-            Debug.WriteLine("[-] Impossible to contact distant server for the centralisation of logs. " + ex.Message);
+            Debug.WriteLine("[-] Impossible to contact distant server. " + ex.Message);
+            ResetConnection();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine("[-] Unexpected error while sending log. " + ex.Message);
+            ResetConnection();
+        }
+        finally
+        {
+            _semaphore.Release();
         }
     }
+
+    // ------------------------------
+    // Utility for connection
+    // ------------------------------
+
+    private async Task EnsureConnectedAsync()
+    {
+        if (_client is { Connected: true } && _stream != null) return;
+        ResetConnection();
+
+        _client = new TcpClient();
+
+        using var cts = new CancellationTokenSource(_connectionTimeoutMs);
+        try
+        {
+            await _client.ConnectAsync(ServerName, ServerPort, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            ResetConnection();
+            throw new TimeoutException($"Connection to {ServerName}:{ServerPort} timed out after {_connectionTimeoutMs}ms.");
+        }
+
+        _stream = _client.GetStream();
+    }
+
+    private async Task<string> ReadResponseAsync()
+    {
+        byte[] headerBuffer = new byte[4];
+        await ReadExactAsync(_stream!, headerBuffer);
+        if (BitConverter.IsLittleEndian) Array.Reverse(headerBuffer);
+        int length = BitConverter.ToInt32(headerBuffer);
+
+        // Read exactly <length> bytes
+        byte[] responseBuffer = new byte[length];
+        await ReadExactAsync(_stream!, responseBuffer);
+
+        return Encoding.UTF8.GetString(responseBuffer);
+    }
+
+    private static async Task ReadExactAsync(NetworkStream stream, byte[] buffer)
+    {
+        int offset = 0;
+        while (offset < buffer.Length)
+        {
+            int bytesRead = await stream.ReadAsync(buffer, offset, buffer.Length - offset);
+            if (bytesRead == 0)
+                throw new IOException("Connection closed by server before all bytes were received.");
+            offset += bytesRead;
+        }
+    }
+
+    private void ResetConnection()
+    {
+        _stream?.Dispose();
+        _client?.Dispose();
+        _stream = null;
+        _client = null;
+    }
+
+    // ------------------------------
+    // Formating
+    // ------------------------------
 
     private string FormatDictionary(Dictionary<string, object> dictionaryContent)
     {
@@ -89,5 +167,14 @@ public abstract class AbstractDistantLogger(string serverName, int serverPort, s
             return "00:00:00:00:00:00";
         }
         return Regex.Replace(mac, ".{2}", "$0:").TrimEnd(':');
+    }
+
+    // ----------
+    // IAsync Disposable
+    // ----------
+    public async ValueTask DisposeAsync()
+    {
+        if (_stream != null) await _stream.DisposeAsync();
+        _client?.Dispose();
     }
 }
