@@ -42,6 +42,25 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         jobVm.Progress = 0;
         jobVm.CurrentFile = string.Empty;
+
+        jobVm.IsPaused = false;
+        _jobManager.ResumeJob(jobVm.Config.Name);
+
         await _jobManager.ExecuteJob(jobVm.Config.Name);
+    }
+
+    [RelayCommand]
+    private void TogglePauseJob(BackupJobViewModel jobVm)
+    {
+        if (jobVm.IsPaused)
+        {
+            _jobManager.ResumeJob(jobVm.Config.Name);
+            jobVm.IsPaused = false;
+        }
+        else
+        {
+            _jobManager.PauseJob(jobVm.Config.Name);
+            jobVm.IsPaused = true;
+        }
     }
 }

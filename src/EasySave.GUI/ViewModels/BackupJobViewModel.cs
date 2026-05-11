@@ -13,9 +13,17 @@ public partial class BackupJobViewModel : ViewModelBase, ISubscriber
     [ObservableProperty] private int _progress;
     [ObservableProperty] private string _currentFile = string.Empty;
 
+    [ObservableProperty] private bool _isPaused;
+    [ObservableProperty] private string _pauseButtonText = "||";
+
     public BackupJobViewModel(BackupConfig config)
     {
         Config = config;
+    }
+
+    partial void OnIsPausedChanged(bool value)
+    {
+        PauseButtonText = value ? "▶" : "||";
     }
 
     public void Update(IBackupEvent backupEvent)
