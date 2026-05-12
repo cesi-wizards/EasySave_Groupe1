@@ -29,7 +29,7 @@
                  ItemsSource="{Binding BackupJobs}">
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="vm:BackupJobViewModel">
-                    <Grid ColumnDefinitions="*,Auto,Auto" Margin="4">
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="4">
 
                         <StackPanel Grid.Column="0" Spacing="4">
                             <Grid ColumnDefinitions="*,Auto,Auto">
@@ -42,12 +42,12 @@
                         </StackPanel>
 
                         <Button Grid.Column="1"
-                                Content="▶"
+                                Content="{Binding PauseButtonText}"
                                 Margin="12,0,0,0"
                                 VerticalAlignment="Center"
-                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ExecuteJobCommand}"
+                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RunOrPauseJobCommand}"
                                 CommandParameter="{Binding}"/>
-
+                        
                         <Button Grid.Column="2"
                                 Content="✕"
                                 Margin="6,0,0,0"

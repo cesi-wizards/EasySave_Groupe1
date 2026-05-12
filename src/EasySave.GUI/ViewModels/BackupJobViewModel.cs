@@ -13,9 +13,22 @@ public partial class BackupJobViewModel : ViewModelBase, ISubscriber
     [ObservableProperty] private int _progress;
     [ObservableProperty] private string _currentFile = string.Empty;
 
+    [ObservableProperty] private bool _isPaused;
+    [ObservableProperty] private bool _isRunning;
+    [ObservableProperty] private string _pauseButtonText = "▶";
+
     public BackupJobViewModel(BackupConfig config)
     {
         Config = config;
+        UpdatePauseButtonText();
+    }
+
+    partial void OnIsPausedChanged(bool value) => UpdatePauseButtonText();
+    partial void OnIsRunningChanged(bool value) => UpdatePauseButtonText();
+
+    private void UpdatePauseButtonText()
+    {
+        PauseButtonText = (!IsRunning || IsPaused) ? "▶" : "||";
     }
 
     public void Update(IBackupEvent backupEvent)
@@ -48,6 +61,8 @@ public partial class BackupJobViewModel : ViewModelBase, ISubscriber
             Dispatcher.UIThread.InvokeAsync(() =>
             {
                 CurrentFile = string.Empty;
+                IsRunning = false;
+                IsPaused = false;
             });
         }
         else if (backupEvent is BackupCompleted)
@@ -56,6 +71,8 @@ public partial class BackupJobViewModel : ViewModelBase, ISubscriber
             {
                 Progress = 100;
                 CurrentFile = string.Empty;
+                IsRunning = false;
+                IsPaused = false;
             });
         }
     }

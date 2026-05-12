@@ -30,18 +30,43 @@ public partial class MainWindowViewModel : ViewModelBase
         _jobManager.SetBusinessSoftwares(softwares);
     }
 
+    [RelayCommand(AllowConcurrentExecutions = true)]
+    private async Task RunOrPauseJob(BackupJobViewModel jobVm)
+    {
+        if (jobVm.IsRunning)
+        {
+            if (jobVm.IsPaused)
+            {
+                _jobManager.ResumeJob(jobVm.Config.Name);
+                jobVm.IsPaused = false;
+            }
+            else
+            {
+                _jobManager.PauseJob(jobVm.Config.Name);
+                jobVm.IsPaused = true;
+            }
+
+            return;
+        }
+
+        jobVm.Progress = 0;
+        jobVm.CurrentFile = string.Empty;
+
+        jobVm.IsPaused = false;
+        jobVm.IsRunning = true;
+
+        _jobManager.ResumeJob(jobVm.Config.Name);
+
+        await _jobManager.ExecuteJob(jobVm.Config.Name);
+
+        jobVm.IsRunning = false;
+        jobVm.IsPaused = false;
+    }
+
     [RelayCommand]
     private void RemoveJob(BackupJobViewModel jobVm)
     {
         _jobManager.RemoveJob(jobVm.Config.Name);
         BackupJobs.Remove(jobVm);
-    }
-
-    [RelayCommand]
-    private async Task ExecuteJob(BackupJobViewModel jobVm)
-    {
-        jobVm.Progress = 0;
-        jobVm.CurrentFile = string.Empty;
-        await Task.Run(() => _jobManager.ExecuteJob(jobVm.Config.Name));
     }
 }

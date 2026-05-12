@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 using EasySave.Domain.Entities;
 using EasySave.Domain.Interfaces;
 using EasySave.Infrastructure.Factories;
@@ -13,6 +15,9 @@ public class JobManager
 
     private readonly List<string> _businessSoftwares;
     private readonly ISoftwareDetector _softwareDetector;
+
+    private readonly ConcurrentDictionary<string, Lazy<Task>> _runningJobs = new();
+    private readonly ConcurrentDictionary<string, ManualResetEvent> _pauseEvents = new();
 
     public JobManager(List<string>? businessSoftwares = null)
     {
@@ -59,17 +64,57 @@ public class JobManager
         _softwareDetector.UpdateProcessNames(_businessSoftwares);
     }
 
-    public void ExecuteJob(string name)
+    public Task ExecuteJob(string name)
     {
         BackupJob? job = Jobs.Find(j => j.Name == name);
-        job?.Execute();
+        if (job == null) return Task.CompletedTask;
+
+        var lazy = _runningJobs.GetOrAdd(name, _ => new Lazy<Task>(() =>
+        {
+            var pauseEvent = _pauseEvents.GetOrAdd(name, __ => new ManualResetEvent(true));
+            return Task.Run(() =>
+            {
+                try
+                {
+                    job.Execute(pauseEvent);
+                }
+                finally
+                {
+                    _runningJobs.TryRemove(name, out Lazy<Task> _);
+                    _pauseEvents.TryRemove(name, out ManualResetEvent? mre);
+                    mre?.Dispose();
+                }
+            });
+        }));
+
+        return lazy.Value;
+    }
+
+    public void PauseJob(string name)
+    {
+        if (_pauseEvents.TryGetValue(name, out var pauseEvent))
+        {
+            pauseEvent.Reset();
+        }
+    }
+
+    public void ResumeJob(string name)
+    {
+        if (_pauseEvents.TryGetValue(name, out var pauseEvent))
+        {
+            pauseEvent.Set();
+        }
     }
 
     public void ExecuteJobs()
     {
         foreach (BackupJob job in Jobs)
         {
-            job.Execute();
+            var pauseEvent = _pauseEvents.GetOrAdd
+            (
+                job.Name, _ => new ManualResetEvent(true)
+            );
+            job.Execute(pauseEvent);
         }
     }
 }
