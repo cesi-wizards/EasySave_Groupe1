@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using System.Collections.Concurrent;
 
 using EasySave.Domain.Entities;
@@ -17,7 +16,7 @@ public class JobManager
     private readonly List<string> _businessSoftwares;
     private readonly ISoftwareDetector _softwareDetector;
 
-    private readonly ConcurrentDictionary<string, Task> _runningJobs = new();
+    private readonly ConcurrentDictionary<string, Lazy<Task>> _runningJobs = new();
     private readonly ConcurrentDictionary<string, ManualResetEvent> _pauseEvents = new();
 
     public JobManager(List<string>? businessSoftwares = null)
@@ -67,34 +66,28 @@ public class JobManager
 
     public Task ExecuteJob(string name)
     {
-        if (_runningJobs.ContainsKey(name))
-        {
-            return _runningJobs[name];
-        }
-
         BackupJob? job = Jobs.Find(j => j.Name == name);
-        if (job == null)
+        if (job == null) return Task.CompletedTask;
+
+        var lazy = _runningJobs.GetOrAdd(name, _ => new Lazy<Task>(() =>
         {
-            return Task.CompletedTask;
-        }
-
-        var pauseEvent = _pauseEvents.GetOrAdd(name, _ => new ManualResetEvent(true));
-
-        var task = Task.Run(() =>
-        {
-            try
+            var pauseEvent = _pauseEvents.GetOrAdd(name, __ => new ManualResetEvent(true));
+            return Task.Run(() =>
             {
-                job.Execute(pauseEvent);
-            }
-            finally
-            {
-                _runningJobs.TryRemove(name, out _);
-                _pauseEvents.TryRemove(name, out _);
-            }
-        });
+                try
+                {
+                    job.Execute(pauseEvent);
+                }
+                finally
+                {
+                    _runningJobs.TryRemove(name, out Lazy<Task> _);
+                    _pauseEvents.TryRemove(name, out ManualResetEvent? mre);
+                    mre?.Dispose();
+                }
+            });
+        }));
 
-        _runningJobs[name] = task;
-        return task;
+        return lazy.Value;
     }
 
     public void PauseJob(string name)
