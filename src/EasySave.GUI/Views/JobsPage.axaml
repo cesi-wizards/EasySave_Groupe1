@@ -174,8 +174,8 @@
                                             VerticalAlignment="Center"
                                             Margin="12,0,0,0">
                                     <Button Classes="run"
-                                            Content="▶"
-                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ExecuteJobCommand}"
+                                            Content="{Binding PauseButtonText}"
+                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RunOrPauseJobCommand}"
                                             CommandParameter="{Binding}"/>
                                     <Button Classes="delete"
                                             Content="✕"
