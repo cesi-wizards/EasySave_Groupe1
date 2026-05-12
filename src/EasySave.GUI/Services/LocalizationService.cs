@@ -23,17 +23,16 @@ public partial class LocalizationService : ObservableObject
 
     partial void OnLanguageChanged(string value)
     {
-        OnPropertyChanged(string.Empty); // rafraîchit toutes les propriétés
-        OnPropertyChanged("Item[]");     // rafraîchit les bindings indexeur
+        OnPropertyChanged(string.Empty); // refresh properties
+        OnPropertyChanged("Item[]");     // refresh binding
     }
 
     [RelayCommand]
     public void ToggleLanguage() => Language = Language == "fr" ? "en" : "fr";
 
-    // Dynamique : affiche la langue vers laquelle basculer
+    // Dynamic : display language to change
     public string LanguageButton => Language == "fr" ? "EN" : "FR";
 
-    // Indexeur utilisé dans les bindings XAML : {Binding Localization[KeyName]}
     public string this[string key] =>
         ResourceManager.GetString(key, new CultureInfo(Language)) ?? key;
 }

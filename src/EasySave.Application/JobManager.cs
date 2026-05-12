@@ -85,7 +85,6 @@ public class JobManager
                 finally
                 {
                     _runningJobs.TryRemove(name, out Lazy<Task> _);
-                    // Ne retire l'entrée que si c'est bien notre MRE (pas celui d'une nouvelle exécution)
                     ((ICollection<KeyValuePair<string, ManualResetEvent>>)_pauseEvents)
                         .Remove(new KeyValuePair<string, ManualResetEvent>(name, pauseEvent));
                     pauseEvent.Dispose();
