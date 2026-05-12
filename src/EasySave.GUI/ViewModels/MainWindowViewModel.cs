@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -120,6 +122,7 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasJobs));
         OnPropertyChanged(nameof(HasNoJobs));
         OnPropertyChanged(nameof(HasRunning));
+        ExecuteAllJobsCommand.NotifyCanExecuteChanged();
     }
 
     public void AddBackupConfig(BackupConfig config)
@@ -159,13 +162,13 @@ public partial class MainWindowViewModel : ViewModelBase
         jobVm.CurrentFile = string.Empty;
 
         jobVm.IsPaused = false;
-        jobVm.IsRunning = true;
+        jobVm.Status = JobStatus.Running;
 
         _jobManager.ResumeJob(jobVm.Config.Name);
 
         await _jobManager.ExecuteJob(jobVm.Config.Name);
 
-        jobVm.IsRunning = false;
+        jobVm.Status = JobStatus.Idle;
         jobVm.IsPaused = false;
     }
 
@@ -176,7 +179,7 @@ public partial class MainWindowViewModel : ViewModelBase
         BackupJobs.Remove(jobVm);
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task ExecuteJob(BackupJobViewModel jobVm)
     {
         if (jobVm.Status == JobStatus.Running) return;
@@ -188,9 +191,14 @@ public partial class MainWindowViewModel : ViewModelBase
             jobVm.Status = JobStatus.Done;
     }
 
-    [RelayCommand]
-    private async Task ExecuteAllJobs(BackupJobViewModel jobVm)
+    private bool CanExecuteAllJobs() => BackupJobs.Any(j => j.Status != JobStatus.Running);
+
+    [RelayCommand(AllowConcurrentExecutions = true, CanExecute = nameof(CanExecuteAllJobs))]
+    private Task ExecuteAllJobs()
     {
-        //TODO: add logic
+        var tasks = BackupJobs
+            .Where(j => j.Status != JobStatus.Running)
+            .Select(j => RunOrPauseJob(j));
+        return Task.WhenAll(tasks);
     }
 }
