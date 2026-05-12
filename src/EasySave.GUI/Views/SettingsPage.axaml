@@ -1,0 +1,65 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:EasySave.GUI.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:DataType="vm:MainWindowViewModel"
+             x:Class="EasySave.GUI.Views.SettingsPage">
+
+    <ScrollViewer Padding="24,0,24,24">
+        <StackPanel Spacing="20" MaxWidth="480">
+
+            <!-- Log Format -->
+            <StackPanel Spacing="5">
+                <TextBlock Text="{Binding Localization[LogFileTypeLabel]}"
+                           FontSize="12" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextPrimary}"/>
+                <Border Background="#F3F4F6" CornerRadius="8" Padding="2">
+                    <Grid ColumnDefinitions="*,*">
+                        <ToggleButton Grid.Column="0" Classes="segment"
+                                      Content="JSON"
+                                      IsChecked="{Binding IsJsonLog}"/>
+                        <ToggleButton Grid.Column="1" Classes="segment"
+                                      Content="XML"
+                                      IsChecked="{Binding IsXmlLog}"/>
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <!-- Blocking Application -->
+            <StackPanel Spacing="5">
+                <TextBlock Text="{Binding Localization[BlockingApplicationLabel]}"
+                           FontSize="12" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextPrimary}"/>
+                <TextBlock Text="{Binding Localization[BlockingApplicationDescription]}"
+                           FontSize="11" Foreground="{StaticResource TextMuted}"
+                           TextWrapping="Wrap"/>
+                <TextBox Classes="modern"
+                         Text="{Binding BlockingApp}"
+                         PlaceholderText="{Binding Localization[BlockingAppPlaceholder]}"/>
+            </StackPanel>
+
+            <!-- Log server -->
+            <StackPanel Spacing="5">
+                <TextBlock Text="{Binding Localization[LogEmplacementTitle]}"
+                           FontSize="12" FontWeight="SemiBold" Foreground="#374151"/>
+                <Border Background="#F3F4F6" CornerRadius="8" Padding="2">
+                    <Grid ColumnDefinitions="*,*,*">
+                        <ToggleButton Grid.Column="0" Classes="segment"
+                                      Content="Local"
+                                      IsChecked="{Binding IsLocalLog}"/>
+                        <ToggleButton Grid.Column="1" Classes="segment"
+                                      Content="Server"
+                                      IsChecked="{Binding IsServerLog}"/>
+                        <ToggleButton Grid.Column="2" Classes="segment"
+                                      Content="Both"
+                                      IsChecked="{Binding IsServerAndLocalLog}"/>
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>
