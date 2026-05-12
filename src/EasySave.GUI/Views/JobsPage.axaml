@@ -1,0 +1,203 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:EasySave.GUI.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:DataType="vm:MainWindowViewModel"
+             x:Class="EasySave.GUI.Views.JobsPage">
+    <StackPanel Grid.Row="1" Margin="0,12,0,0">
+
+        <!-- Empty state -->
+        <StackPanel IsVisible="{Binding HasNoJobs}"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Spacing="10">
+            <Border Width="56" Height="56" CornerRadius="16"
+                    Background="#F3F4F6"
+                    HorizontalAlignment="Center">
+                <Image Source="/Assets/EasySave-logo.png"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+            </Border>
+            <TextBlock Text="{Binding Localization[NoJobsTitle]}"
+                       FontSize="15" FontWeight="SemiBold"
+                       Foreground="{StaticResource TextPrimary}"
+                       HorizontalAlignment="Center"/>
+            <TextBlock Text="{Binding Localization[NoJobsDescription]}"
+                       FontSize="13"
+                       Foreground="{StaticResource TextMuted}"
+                       HorizontalAlignment="Center"
+                       TextAlignment="Center"
+                       MaxWidth="240"
+                       TextWrapping="Wrap"/>
+            <Button Classes="cta" Width="180"
+                    Margin="0,6,0,0"
+                    HorizontalAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    Click="OnNewBackupClick">
+                <TextBlock Text="{Binding Localization[NewBackup]}"/>
+            </Button>
+        </StackPanel>
+
+        <!-- Job list -->
+        <ScrollViewer IsVisible="{Binding HasJobs}"
+                      Padding="12,0,12,12">
+            <StackPanel>
+            <ItemsControl ItemsSource="{Binding BackupJobs}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:BackupJobViewModel">
+                        <Border Margin="0,0,0,4" CornerRadius="12"
+                                Padding="14,12" Background="Transparent">
+                            <Border.Styles>
+                                <Style Selector="Border:pointerover">
+                                    <Setter Property="Background" Value="#03000000"/>
+                                </Style>
+                            </Border.Styles>
+
+                            <Grid ColumnDefinitions="*,Auto">
+
+                                <!-- Left: info -->
+                                <StackPanel Grid.Column="0" Spacing="6">
+
+                                    <!-- Row 1: Name + chips + status -->
+                                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding Config.Name}"
+                                                   FontWeight="SemiBold" FontSize="14"
+                                                   Foreground="{StaticResource TextPrimary}"
+                                                   VerticalAlignment="Center"/>
+
+                                        <!-- Type chip -->
+                                        <Border Grid.Column="1"
+                                                Background="{Binding TypeBackground}"
+                                                CornerRadius="4"
+                                                Padding="7,2" Margin="8,0,0,0">
+                                            <Border.BorderBrush>
+                                                <Binding Path="TypeForeground"/>
+                                            </Border.BorderBrush>
+                                            <Border.BorderThickness>
+                                                <Thickness>1</Thickness>
+                                            </Border.BorderThickness>
+                                            <TextBlock Text="{Binding TypeLabel}"
+                                                       Foreground="{Binding TypeForeground}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       LetterSpacing="0.8"
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+
+                                        <!-- Lock icon -->
+                                        <TextBlock Grid.Column="2"
+                                                   Text="🔒" FontSize="11"
+                                                   IsVisible="{Binding HasEncryptKey}"
+                                                   Margin="6,0,0,0"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{StaticResource TextMuted}"/>
+
+                                        <!-- Extensions -->
+                                        <TextBlock Grid.Column="3"
+                                                   Text="{Binding ExtensionsText}"
+                                                   FontSize="10"
+                                                   Foreground="{StaticResource TextMuted}"
+                                                   IsVisible="{Binding HasExtensions}"
+                                                   Margin="6,0,0,0"
+                                                   VerticalAlignment="Center"/>
+
+                                        <!-- Status badge -->
+                                        <Border Grid.Column="4"
+                                                Background="{Binding StatusBackground}"
+                                                CornerRadius="99"
+                                                Padding="8,2">
+                                            <TextBlock Text="{Binding StatusLabel}"
+                                                       Foreground="{Binding StatusForeground}"
+                                                       FontSize="11" FontWeight="SemiBold"
+                                                       LetterSpacing="0.4"
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- Row 2: Progress bar + % -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <ProgressBar Grid.Column="0"
+                                                     Minimum="0" Maximum="100"
+                                                     Value="{Binding Progress}"
+                                                     Height="4"
+                                                     Foreground="{Binding ProgressColor}"
+                                                     Background="#12000000"
+                                                     CornerRadius="99"
+                                                     VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   FontSize="11"
+                                                   Foreground="{StaticResource TextMuted}"
+                                                   Margin="8,0,0,0"
+                                                   Width="34"
+                                                   TextAlignment="Right"
+                                                   VerticalAlignment="Center">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0}%">
+                                                    <Binding Path="Progress"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </Grid>
+
+                                    <!-- Row 3: Current file or source path -->
+                                    <TextBlock FontSize="11"
+                                               Foreground="{StaticResource TextMuted}"
+                                               TextTrimming="CharacterEllipsis">
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="↳ {0}">
+                                                <Binding Path="CurrentFile"/>
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                        <TextBlock.IsVisible>
+                                            <Binding Path="CurrentFile"
+                                                     Converter="{x:Static StringConverters.IsNotNullOrEmpty}"/>
+                                        </TextBlock.IsVisible>
+                                    </TextBlock>
+                                    <TextBlock FontSize="11"
+                                               Foreground="{StaticResource TextMuted}"
+                                               Text="{Binding Config.SourcePath}"
+                                               TextTrimming="CharacterEllipsis">
+                                        <TextBlock.IsVisible>
+                                            <Binding Path="CurrentFile"
+                                                     Converter="{x:Static StringConverters.IsNullOrEmpty}"/>
+                                        </TextBlock.IsVisible>
+                                    </TextBlock>
+
+                                </StackPanel>
+
+                                <!-- Right: action buttons -->
+                                <StackPanel Grid.Column="1"
+                                            Orientation="Horizontal"
+                                            Spacing="6"
+                                            VerticalAlignment="Center"
+                                            Margin="12,0,0,0">
+                                    <Button Classes="run"
+                                            Content="▶"
+                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ExecuteJobCommand}"
+                                            CommandParameter="{Binding}"/>
+                                    <Button Classes="delete"
+                                            Content="✕"
+                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveJobCommand}"
+                                            CommandParameter="{Binding}"/>
+                                </StackPanel>
+
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Button Classes="run"
+                    Content="▶▶"
+                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ExecuteAllJobsCommand}">
+                <Button.Styles>
+                    <Style Selector="Button:pointerover">
+                        <Setter Property="ToolTip.Tip" Value="{Binding Localization[RunAllJobPointerover]}"/>
+                    </Style>
+                </Button.Styles>
+            </Button>
+            </StackPanel>
+        </ScrollViewer>
+    </StackPanel>
+</UserControl>
