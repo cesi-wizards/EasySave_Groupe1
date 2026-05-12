@@ -37,4 +37,13 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.1" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Views\SettingsPage.axaml.cs">
+      <DependentUpon>SettingsPage.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="Views\ErrorDialog.axaml.cs">
+      <DependentUpon>ErrorDialog.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
 </Project>
