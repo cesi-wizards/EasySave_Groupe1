@@ -28,7 +28,7 @@ public partial class BackupConfigDialog : Window
         var folder = await topLevel.StorageProvider.OpenFolderPickerAsync(
             new FolderPickerOpenOptions
         {
-            Title = LocalizationService.Instance.SelectFolderTitle,
+            Title = LocalizationService.Instance["SelectFolderTitle"],
             AllowMultiple = false
         });
 
