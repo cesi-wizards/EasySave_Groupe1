@@ -164,7 +164,8 @@
             <Setter Property="Foreground" Value="White"/>
         </Style>
         <Style Selector="Button.modal-primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#2F5AE0"/>
+            <Setter Property="Background" Value="#003ef8"></Setter>
+            <Setter Property="Foreground" Value="White"></Setter>
         </Style>
         <Style Selector="Button.modal-primary:disabled /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="#9CA3AF"/>
