@@ -1,3 +1,4 @@
+using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using EasySave.Domain.Entities;
@@ -17,7 +18,6 @@ public partial class BackupJobViewModel : ViewModelBase, ISubscriber
     [ObservableProperty] private JobStatus _status = JobStatus.Idle;
 
     [ObservableProperty] private bool _isPaused;
-    [ObservableProperty] private bool _isRunning;
     [ObservableProperty] private string _pauseButtonText = "▶";
 
     public BackupJobViewModel(BackupConfig config)
@@ -27,11 +27,10 @@ public partial class BackupJobViewModel : ViewModelBase, ISubscriber
     }
 
     partial void OnIsPausedChanged(bool value) => UpdatePauseButtonText();
-    partial void OnIsRunningChanged(bool value) => UpdatePauseButtonText();
 
     private void UpdatePauseButtonText()
     {
-        PauseButtonText = (!IsRunning || IsPaused) ? "▶" : "||";
+        PauseButtonText = (!IsRunning || IsPaused) ? "▶" : "⏸";
     }
 
     public void Update(IBackupEvent backupEvent)
@@ -64,8 +63,8 @@ public partial class BackupJobViewModel : ViewModelBase, ISubscriber
             Dispatcher.UIThread.InvokeAsync(() =>
             {
                 CurrentFile = string.Empty;
-                IsRunning = false;
                 IsPaused = false;
+                Status = JobStatus.Idle;
             });
         }
         else if (backupEvent is BackupCompleted)
@@ -74,8 +73,8 @@ public partial class BackupJobViewModel : ViewModelBase, ISubscriber
             {
                 Progress = 100;
                 CurrentFile = string.Empty;
-                IsRunning = false;
                 IsPaused = false;
+                Status = JobStatus.Done;
             });
         }
     }
@@ -145,5 +144,6 @@ public partial class BackupJobViewModel : ViewModelBase, ISubscriber
         OnPropertyChanged(nameof(StatusBackground));
         OnPropertyChanged(nameof(StatusForeground));
         OnPropertyChanged(nameof(ProgressColor));
+        UpdatePauseButtonText();
     }
 }
