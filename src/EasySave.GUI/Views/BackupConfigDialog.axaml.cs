@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Dialogs;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using EasySave.GUI.Services;
 using EasySave.GUI.ViewModels;
 
 namespace EasySave.GUI.Views;
@@ -27,7 +28,7 @@ public partial class BackupConfigDialog : Window
         var folder = await topLevel.StorageProvider.OpenFolderPickerAsync(
             new FolderPickerOpenOptions
         {
-            Title = "Select a Folder",
+            Title = LocalizationService.Instance["SelectFolderTitle"],
             AllowMultiple = false
         });
 

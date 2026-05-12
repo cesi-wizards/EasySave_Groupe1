@@ -43,6 +43,6 @@ public class MainViewModel(string configFilePath, int[] jobsToExecute)
         {
             jobManager.AddJob(config);
         }
-        jobManager.ExecuteJobs();
+        jobManager.ExecuteAllJobs();
     }
 }

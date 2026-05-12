@@ -54,6 +54,8 @@ public class JobManager
         if (jobToRemove != null)
         {
             Jobs.Remove(jobToRemove);
+            _runningJobs.TryRemove(backupName, out _);
+            // _pauseEvents intentionally not touched : la task en cours possède son MRE et le dispose dans son finally
         }
     }
 
@@ -71,7 +73,9 @@ public class JobManager
 
         var lazy = _runningJobs.GetOrAdd(name, _ => new Lazy<Task>(() =>
         {
-            var pauseEvent = _pauseEvents.GetOrAdd(name, __ => new ManualResetEvent(true));
+            var pauseEvent = new ManualResetEvent(true);
+            _pauseEvents[name] = pauseEvent;
+
             return Task.Run(() =>
             {
                 try
@@ -81,8 +85,9 @@ public class JobManager
                 finally
                 {
                     _runningJobs.TryRemove(name, out Lazy<Task> _);
-                    _pauseEvents.TryRemove(name, out ManualResetEvent? mre);
-                    mre?.Dispose();
+                    ((ICollection<KeyValuePair<string, ManualResetEvent>>)_pauseEvents)
+                        .Remove(new KeyValuePair<string, ManualResetEvent>(name, pauseEvent));
+                    pauseEvent.Dispose();
                 }
             });
         }));
@@ -106,15 +111,10 @@ public class JobManager
         }
     }
 
-    public void ExecuteJobs()
+    public Task ExecuteAllJobs()
     {
-        foreach (BackupJob job in Jobs)
-        {
-            var pauseEvent = _pauseEvents.GetOrAdd
-            (
-                job.Name, _ => new ManualResetEvent(true)
-            );
-            job.Execute(pauseEvent);
-        }
+        var tasks = Jobs.Select(job => ExecuteJob(job.Name));
+        return Task.WhenAll(tasks);
+
     }
 }

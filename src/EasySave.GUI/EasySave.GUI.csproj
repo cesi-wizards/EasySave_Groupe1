@@ -13,6 +13,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Update="Resources\Strings.resx">
+      <Generator></Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Strings.fr.resx">
+      <Generator></Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\EasySave.Domain\EasySave.Domain.csproj" />
     <ProjectReference Include="..\EasySave.Application\EasySave.Application.csproj" />
   </ItemGroup>
@@ -27,5 +36,14 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Views\SettingsPage.axaml.cs">
+      <DependentUpon>SettingsPage.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="Views\ErrorDialog.axaml.cs">
+      <DependentUpon>ErrorDialog.axaml</DependentUpon>
+    </Compile>
   </ItemGroup>
 </Project>
