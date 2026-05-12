@@ -3,65 +3,178 @@
         xmlns:vm="using:EasySave.GUI.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        xmlns:views="clr-namespace:EasySave.GUI.Views"
+        mc:Ignorable="d" d:DesignWidth="860" d:DesignHeight="540"
         x:Class="EasySave.GUI.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/EasySave-logo.ico"
-        Title="EasySave">
+        Title="EasySave"
+        MinWidth="700"
+        MinHeight="460"
+        Background="White">
 
     <Design.DataContext>
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <Grid RowDefinitions="Auto,*" Margin="20">
+    <Grid ColumnDefinitions="210,*">
 
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,8,Auto">
-            <Button Grid.Column="0"
-                    Content="{Binding Localization.NewBackup}"
-                    Click="OnNewBackupClick"/>
-            <Button Grid.Column="2"
-                    Content="{Binding Localization.LanguageButton}"
-                    Command="{Binding Localization.ToggleLanguageCommand}"/>
-            <Button Grid.Column="4"
-                    Content="{Binding Localization.SettingsButton}"
-                    Click="OnSettingsClick"/>
-        </Grid>
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <!-- SIDEBAR                                                            -->
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <Border Grid.Column="0"
+                Background="{StaticResource SidebarBrush}"
+                BorderBrush="{StaticResource SidebarBorderBrush}"
+                BorderThickness="0,0,1,0">
+            <DockPanel>
 
-        <ListBox Grid.Row="1"
-                 Margin="0,12,0,0"
-                 ItemsSource="{Binding BackupJobs}">
-            <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="vm:BackupJobViewModel">
-                    <Grid ColumnDefinitions="*,Auto,Auto" Margin="4">
-
-                        <StackPanel Grid.Column="0" Spacing="4">
-                            <Grid ColumnDefinitions="*,Auto,Auto">
-                                <TextBlock Grid.Column="0" Text="{Binding Config.Name}" FontWeight="Bold" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="1" Text="{Binding Config.Type}" Margin="12,0,12,0" VerticalAlignment="Center" Foreground="Gray"/>
-                                <TextBlock Grid.Column="2" Text="{Binding Config.LogFileType}" VerticalAlignment="Center" Foreground="Gray"/>
-                            </Grid>
-                            <ProgressBar Minimum="0" Maximum="100" Value="{Binding Progress}" Height="6"/>
-                            <TextBlock Text="{Binding CurrentFile}" FontSize="11" Foreground="Gray"/>
+                <!-- New Backup CTA (bottom) -->
+                <Border DockPanel.Dock="Bottom" Padding="10,8,10,16">
+                    <Button Classes="cta"
+                            Click="OnNewBackupClick">
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <TextBlock Text="{Binding Localization[NewBackup]}"
+                                       VerticalAlignment="Center"
+                                       />
                         </StackPanel>
+                    </Button>
+                </Border>
 
-                        <Button Grid.Column="1"
-                                Content="▶"
-                                Margin="12,0,0,0"
-                                VerticalAlignment="Center"
-                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ExecuteJobCommand}"
-                                CommandParameter="{Binding}"/>
+                <!-- Logo -->
+                <Border DockPanel.Dock="Top" Padding="14,20,14,10">
+                    <StackPanel Orientation="Horizontal" Spacing="9">
+                        <Border Width="30" Height="30" CornerRadius="8"
+                                Background="#3B6AF7">
+                            <Image Source="/Assets/EasySave-logo.png"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="EasySave"
+                                   FontWeight="Bold" FontSize="15"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   VerticalAlignment="Center"
+                                   LetterSpacing="-0.3"/>
+                    </StackPanel>
+                </Border>
 
-                        <Button Grid.Column="2"
-                                Content="✕"
-                                Margin="6,0,0,0"
-                                VerticalAlignment="Center"
-                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveJobCommand}"
-                                CommandParameter="{Binding}"/>
+                <!-- Stats pills -->
+                <Border DockPanel.Dock="Top" Padding="10,0,10,14">
+                    <Grid ColumnDefinitions="*,5,*,5,*">
+
+                        <!-- Total -->
+                        <Border Grid.Column="0" CornerRadius="8"
+                                Background="#143B6AF7" Padding="8,6">
+                            <StackPanel>
+                                <TextBlock Text="{Binding TotalJobs}"
+                                           FontSize="17" FontWeight="Bold"
+                                           Foreground="#3B6AF7"/>
+                                <TextBlock Text="TOTAL"
+                                           FontSize="9" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextSecondary}"
+                                           LetterSpacing="1"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Done -->
+                        <Border Grid.Column="2" CornerRadius="8"
+                                Background="#1422C55E" Padding="8,6">
+                            <StackPanel>
+                                <TextBlock Text="{Binding DoneJobs}"
+                                           FontSize="17" FontWeight="Bold"
+                                           Foreground="#16A34A"/>
+                                <TextBlock Text="{Binding Localization[DoneLabel]}"
+                                           FontSize="9" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextSecondary}"
+                                           LetterSpacing="1"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Active -->
+                        <Border Grid.Column="4" CornerRadius="8"
+                                Background="#0F000000" Padding="8,6">
+                            <StackPanel>
+                                <TextBlock Text="{Binding RunningJobs}"
+                                           FontSize="17" FontWeight="Bold"
+                                           Foreground="{StaticResource TextSecondary}"/>
+                                <TextBlock Text="{Binding Localization[ActiveLabel]}"
+                                           FontSize="9" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextSecondary}"
+                                           LetterSpacing="1"/>
+                            </StackPanel>
+                        </Border>
+
                     </Grid>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+                </Border>
 
+                <!-- Nav items -->
+                <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="8,0">
+                    <Button Classes="nav" Click="OnJobsNavClick">
+                        <StackPanel Orientation="Horizontal" Spacing="9">
+                            <TextBlock Text="{Binding Localization[BackupJobsNav]}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="nav" Click="OnLogsNavClick">
+                        <StackPanel Orientation="Horizontal" Spacing="9">
+                            <TextBlock Text="{Binding Localization[LogsNav]}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="nav" Click="OnSettingsNavClick">
+                        <StackPanel Orientation="Horizontal" Spacing="9">
+                            <TextBlock Text="{Binding Localization[SettingsButton]}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <!-- Spacer -->
+                <Border/>
+            </DockPanel>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <!-- MAIN CONTENT                                                       -->
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+
+
+        <Grid Grid.Column="1" RowDefinitions="Auto,*" Background="White">
+
+            <!-- Toolbar -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto"
+                  Margin="20,16,20,0">
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{Binding CurrentPageTitle}"
+                               FontWeight="Bold" FontSize="18"
+                               Foreground="{StaticResource TextPrimary}"
+                               LetterSpacing="-0.4"/>
+                    <TextBlock FontSize="12"
+                               Foreground="{StaticResource TextMuted}"
+                               Margin="0,2,0,0"
+                               IsVisible="{Binding ShowJobsPage}">
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="{}{0} job(s)">
+                                <Binding Path="TotalJobs"/>
+                            </MultiBinding>
+                        </TextBlock.Text>
+                    </TextBlock>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                            VerticalAlignment="Center">
+                    <!-- Language toggle -->
+                    <Button Classes="icon"
+                            Content="{Binding Localization.LanguageButton}"
+                            Command="{Binding Localization.ToggleLanguageCommand}"
+                            FontWeight="SemiBold" FontSize="11"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Page area -->
+            <Panel Grid.Row="1" Margin="0,12,0,0">
+                <views:JobsPage IsVisible="{Binding ShowJobsPage}"/>
+                <Panel IsVisible="{Binding ShowLogsPage}">
+                    <views:LogsPage DataContext="{Binding LogsPageVm}"/>
+                </Panel>
+                <views:SettingsPage IsVisible="{Binding ShowSettingsPage}"/>
+            </Panel>
+        </Grid>
     </Grid>
-
 </Window>
