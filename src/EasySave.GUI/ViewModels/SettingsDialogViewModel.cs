@@ -12,7 +12,27 @@ public partial class SettingsDialogViewModel : ViewModelBase
 
     public IEnumerable<string> LogFileTypes { get; } = ["JSON", "XML"];
 
+    public bool IsJsonLog
+    {
+        get => SelectedLogFileType == "JSON";
+        set { if (value) SelectedLogFileType = "JSON"; }
+    }
+
+    public bool IsXmlLog
+    {
+        get => SelectedLogFileType == "XML";
+        set { if (value) SelectedLogFileType = "XML"; }
+    }
+
+    partial void OnSelectedLogFileTypeChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsJsonLog));
+        OnPropertyChanged(nameof(IsXmlLog));
+    }
+
     public event Action<bool>? CloseRequested;
+
+    public SettingsDialogViewModel() : this(string.Empty, "JSON") { }
 
     public SettingsDialogViewModel(string currentBlockingApp, string currentLogFileType)
     {

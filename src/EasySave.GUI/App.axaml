@@ -11,7 +11,12 @@
     </Application.DataTemplates>-->
 
     <Application.DataTemplates>
-        <local:ViewLocator/>
+        <DataTemplate DataType="viewModels:JobsPageViewModel">
+            <views:JobsPage/>
+        </DataTemplate>
+        <DataTemplate DataType="viewModels:LogsPageViewModel">
+            <views:LogsPage/>
+        </DataTemplate>
     </Application.DataTemplates>
 
 
