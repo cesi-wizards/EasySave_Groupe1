@@ -1,0 +1,143 @@
+@startuml
+title EasySave V3.0 Activity Diagram
+group Global View{
+    start
+    :EasySave.exe;
+    :Program launch;
+    :Initializing Avalonia GUI;
+    repeat
+    partition GUI {
+        note : The GUI is the HMI that\nenables the user to access\n different commands
+        switch(action ?)
+            case(create backup)
+                :Create Backup;
+                note right : Fields :\n- (JSON / XML) logType \n - (differential / full) backup \n - source dir\n - target dir\n - types to encrypt + key \n - types of files with priority
+            case(launch backups asynchronously)
+                :Launch asynchronous backup(s) k (and n);
+                note right : See Backup Logic
+            case(See logs)
+                :list files within the log directory;
+            case(Pause Backup k)
+                :Pause Backup k;
+            case(Stop Backup k)
+                :Stop Backup k;
+            case(Delete Backup k)
+                :Delete Backup k;
+        endswitch
+    }
+    repeat while (Exit not requested)
+    :Closing the application;
+    stop
+    }
+
+group Backup{
+    partition Backup Logic{
+        start
+        ' Job
+        !procedure $process_job($label)
+          partition "$label" {
+            :Collect the list of files to backup;
+            note right: See FileListGenerator
+            repeat
+              :wait for permission to continue
+              :Update state file;
+              :Copy of the file;
+              if(file extension in typeToEncrypt) then (yes)
+              :Encrypt file;
+              else (no)
+              endif
+              :Write in the logs; 
+              note right: See Log Logic
+            repeat while (FileList isn't empty ?)
+            :Update state file;
+          }
+        !endprocedure
+        ' Asynchronous jobs
+        fork
+          $process_job("job k")
+        fork again
+          $process_job("job n")
+        end fork
+        stop
+    }
+    
+    partition FileListGenerator{
+        start
+        note : Logic to create the list\nof files that will be backup
+            if(backup type ?) then (differential)
+                :Gathering target file list;
+                :Comparing source to target to add only files\nthat have been updated in FileList;
+            else (full)
+                :Add all files to the FileList;
+            endif
+            if(priorityExtensionList ?) then (isn't empty)
+                :Handle priority in the list;
+                note right :Give priority in the list to the files with\nextentions in priorityExtensionList;
+            else (is empty)
+            endif
+        :return FileList;
+        stop
+    }
+}
+group Logs{
+    'Log logic
+    partition Log Logic {
+        note : dll to log informations\nabout the backup progress\n(used by both EasySave and EasySaveServer)
+        start
+            'Local
+            group Local Log Logic {
+                if(Requesting local save ?) then (yes)
+                    if(Does directory to save log already exists ?) then (no)
+                        :Create the chain of directories to log files;
+                    endif
+                    
+                    switch(logType ?)
+                     case("json")
+                        :format the content for JSON lines;
+                     case("xml")
+                        :format the content for XML;
+                    endswitch
+                    :Write the content within the logfile;
+                endif
+            }
+            'Distant
+            group Distant Log Logic {
+                if(Requesting Distant Save ?) then (yes)
+                    switch(logType ?)
+                     case("json")
+                        :write the type to save as "json";
+                     case("xml")
+                        :write the type to save as "xml";
+                    endswitch
+                    :Recover the Mac Address of the device;
+                    :Open connection to the server;
+                    :Transfer content as payload;
+                endif
+            }
+        stop
+    }
+
+    partition EasySaveServer{
+        note : EasySave Server Running\non a docker container :\nExplains how server treats query\nafter receiving payloads
+        ' treatment of demand
+        !procedure $handle_client_async($client)
+        :Client $client;
+        :Create buffer;
+        :Reading header;
+        :Extract data;
+        :Write data in the logs;
+        note right: See Log Logic
+        !endprocedure
+        start
+        :Start server;
+            repeat
+                fork
+                    $handle_client_async(k)
+                fork again
+                    $handle_client_async(n)
+                end fork
+            repeat while (server running)
+        stop
+    }
+}
+@enduml
