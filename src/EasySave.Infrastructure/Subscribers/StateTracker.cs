@@ -133,8 +133,16 @@ public class StateTracker : ISubscriber
             {
                 if (File.Exists(GetStatePath()))
                 {
-                    string fileData = File.ReadAllText(GetStatePath());
-                    states = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(fileData) ?? new List<Dictionary<string, object>>();
+                    try
+                    {
+                        string fileData = File.ReadAllText(GetStatePath());
+                        states = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(fileData) ?? new List<Dictionary<string, object>>();
+                    }
+                    catch (JsonException)
+                    {
+                        // File is corrupted (e.g. partial write after a crash) — reset it
+                        states = new List<Dictionary<string, object>>();
+                    }
                 }
                 else
                 {
@@ -165,7 +173,11 @@ public class StateTracker : ISubscriber
 
                 string statePath = GetStatePath();
                 EnsureDirectoryExists(statePath);
-                File.WriteAllText(statePath, updatedJson);
+
+                // Atomic write: write to a temp file then rename to avoid corruption on crash
+                string tempPath = statePath + ".tmp";
+                File.WriteAllText(tempPath, updatedJson);
+                File.Move(tempPath, statePath, overwrite: true);
             }
             catch (Exception ex)
             {
