@@ -20,7 +20,7 @@ public partial class JobsPage : UserControl
         var confirmed = await dialog.ShowDialog<bool>(window);
 
         if (confirmed && dialog.DataContext is BackupConfigDialogViewModel dialogVm && dialogVm.Result is not null)
-            ((MainWindowViewModel)DataContext!).AddBackupConfig(dialogVm.Result);
+            ((JobsPageViewModel)DataContext!).AddBackupConfig(dialogVm.Result);
     }
 }
 
