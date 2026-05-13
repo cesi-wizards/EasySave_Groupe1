@@ -169,11 +169,15 @@
 
             <!-- Page area -->
             <Panel Grid.Row="1" Margin="0,12,0,0">
-                <views:JobsPage IsVisible="{Binding ShowJobsPage}"/>
+                <Panel IsVisible="{Binding ShowJobsPage}">
+                    <views:JobsPage DataContext="{Binding JobsPageVm}"/>
+                </Panel>
                 <Panel IsVisible="{Binding ShowLogsPage}">
                     <views:LogsPage DataContext="{Binding LogsPageVm}"/>
                 </Panel>
-                <views:SettingsPage IsVisible="{Binding ShowSettingsPage}"/>
+                <Panel IsVisible="{Binding ShowSettingsPage}">
+                    <views:SettingsPage DataContext="{Binding SettingsPageVm}"/>
+                </Panel>
             </Panel>
         </Grid>
     </Grid>

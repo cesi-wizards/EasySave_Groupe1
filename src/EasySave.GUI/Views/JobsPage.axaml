@@ -4,7 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:DataType="vm:MainWindowViewModel"
+             x:DataType="vm:JobsPageViewModel"
              x:Class="EasySave.GUI.Views.JobsPage">
     <StackPanel Grid.Row="1" Margin="0,12,0,0">
 
@@ -175,11 +175,11 @@
                                             Margin="12,0,0,0">
                                     <Button Classes="run"
                                             Content="{Binding PauseButtonText}"
-                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RunOrPauseJobCommand}"
+                                            Command="{Binding $parent[UserControl].((vm:JobsPageViewModel)DataContext).RunOrPauseJobCommand}"
                                             CommandParameter="{Binding}"/>
                                     <Button Classes="delete"
                                             Content="✕"
-                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveJobCommand}"
+                                            Command="{Binding $parent[UserControl].((vm:JobsPageViewModel)DataContext).RemoveJobCommand}"
                                             CommandParameter="{Binding}"/>
                                 </StackPanel>
 
@@ -190,7 +190,7 @@
             </ItemsControl>
             <Button Classes="run"
                     Content="▶▶"
-                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ExecuteAllJobsCommand}">
+                    Command="{Binding $parent[UserControl].((vm:JobsPageViewModel)DataContext).ExecuteAllJobsCommand}">
                 <Button.Styles>
                     <Style Selector="Button:pointerover">
                         <Setter Property="ToolTip.Tip" Value="{Binding Localization[RunAllJobPointerover]}"/>
