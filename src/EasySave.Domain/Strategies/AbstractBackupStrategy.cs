@@ -103,11 +103,19 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 
     // main strategy execution method
 
-    public void Execute(string jobName, string sourcePath, string targetPath, List<string> typesToEncrypt, string encryptKey, ManualResetEvent pauseEvent)
+    public void Execute(string jobName, string sourcePath, string targetPath, List<string> typesToEncrypt, string encryptKey, ManualResetEvent pauseEvent, ITransferGate gate)
     {
         if (IsSoftwareRunning(jobName)) return;
 
         var (toBackup, count, size) = GetBackupFiles(sourcePath, targetPath);
+
+        if (gate != null)
+        {
+            int priorityCount = toBackup.Count(f => gate.IsPriority(Path.GetExtension(f)));
+            gate.RegisterPriorityFiles(priorityCount);
+            if (priorityCount > 0)
+                toBackup = [.. toBackup.OrderByDescending(f => gate.IsPriority(Path.GetExtension(f)))];
+        }
 
         int remainingCount = count;
         long remainingSize = size;
@@ -121,6 +129,7 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
             if (IsSoftwareRunning(jobName)) { interrupted = true; break; }
 
             long fileSize = new FileInfo(sourceFile).Length;
+            string extension = Path.GetExtension(sourceFile);
             var targetFile = GetTargetFile(sourcePath, targetPath, sourceFile);
 
             var fileInfo = new BackupFileInfo(sourceFile, fileSize, targetFile);
@@ -135,6 +144,7 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
 
             TimeSpan transferTime = TimeSpan.Zero;
 
+            gate?.Acquire(extension, fileSize);
             try
             {
                 transferTime = CopyFile(sourceFile, targetFile);
@@ -150,11 +160,36 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
                 ));
                 continue;
             }
+            finally
+            {
+                gate?.Release(extension, fileSize);
+            }
 
             remainingCount--; remainingSize -= fileSize;
 
-            TimeSpan encryptTime = typesToEncrypt.Contains(Path.GetExtension(targetFile))
-                ? _encryptionService.Encrypt(targetFile, encryptKey) : TimeSpan.Zero;
+            TimeSpan encryptTime = TimeSpan.Zero;
+            if (typesToEncrypt.Contains(Path.GetExtension(targetFile)))
+            {
+                try
+                {
+                    encryptTime = _encryptionService.Encrypt(targetFile, encryptKey);
+                }
+                catch (FileNotFoundException)
+                {
+                    throw; // CryptoSoft not installed — abort the backup
+                }
+                catch (Exception e)
+                {
+                    failedCount++;
+                    Notify(new FileTransferFailure(
+                        new EventMetadata { JobName = jobName },
+                        fileInfo,
+                        e.Message,
+                        beforeTransfer
+                    ));
+                    continue;
+                }
+            }
 
             Notify(new FileTransferSuccess(
                     new EventMetadata { JobName = jobName },
@@ -173,4 +208,5 @@ public abstract class AbstractBackupStrategy : IBackupStrategy, IPublisher
             ));
         }
     }
+
 }

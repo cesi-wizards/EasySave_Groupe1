@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using CommunityToolkit.Mvvm.Input;
 using EasySave.Application;
 using EasySave.Domain.Entities;
+using EasySave.GUI;
 
 namespace EasySave.GUI.ViewModels;
 
@@ -83,9 +84,16 @@ public partial class JobsPageViewModel : ViewModelBase
         jobVm.Status = JobStatus.Running;
 
         _jobManager.ResumeJob(jobVm.Config.Name);
-        await _jobManager.ExecuteJob(jobVm.Config.Name);
-
-        jobVm.Status = JobStatus.Idle;
+        try
+        {
+            await _jobManager.ExecuteJob(jobVm.Config.Name);
+            jobVm.Status = JobStatus.Idle;
+        }
+        catch (FileNotFoundException ex)
+        {
+            jobVm.Status = JobStatus.Error;
+            App.ShowErrorDialog(ex);
+        }
         jobVm.IsPaused = false;
     }
 

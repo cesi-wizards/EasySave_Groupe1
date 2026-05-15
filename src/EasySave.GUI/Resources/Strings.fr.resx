@@ -57,4 +57,16 @@
   <!-- Common -->
   <data name="CancelButton" xml:space="preserve"><value>Annuler</value></data>
   <data name="SaveButton" xml:space="preserve"><value>Enregistrer</value></data>
+  <data name="PriorityExtensionsLabel" xml:space="preserve">
+      <value>Extensions des fichiers prioritaires</value>
+  </data>
+  <data name="LargeFileThresholdLabel" xml:space="preserve">
+      <value>Taille maximale de fichier parallèle</value>
+  </data>
+  <data name="LargeFileThresholdDescription" xml:space="preserve">
+      <value>Les fichiers supérieur à cette taille (Ko) ne serons pas transférer en parallèle (0 désactive la fonctionnalité)</value>
+  </data>
+  <data name="PriorityExtensionsDescription" xml:space="preserve">
+      <value>Types de fichiers à transférer en priorité (ex. .pdf, .png)</value>
+  </data>
 </root>
