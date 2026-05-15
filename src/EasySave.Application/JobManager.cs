@@ -18,6 +18,7 @@ public class JobManager
 
     private readonly ConcurrentDictionary<string, Lazy<Task>> _runningJobs = new();
     private readonly ConcurrentDictionary<string, ManualResetEvent> _pauseEvents = new();
+    private readonly TransferGate _transferGate = new();
 
     public JobManager(List<string>? businessSoftwares = null)
     {
@@ -66,6 +67,12 @@ public class JobManager
         _softwareDetector.UpdateProcessNames(_businessSoftwares);
     }
 
+    public void SetPriorityExtensions(IEnumerable<string> extensions) =>
+        _transferGate.SetPriorityExtensions(extensions);
+
+    public void SetLargeFileSizeThreshold(long thresholdKb) =>
+        _transferGate.SetLargeFileSizeThreshold(thresholdKb);
+
     public Task ExecuteJob(string name)
     {
         BackupJob? job = Jobs.Find(j => j.Name == name);
@@ -80,7 +87,7 @@ public class JobManager
             {
                 try
                 {
-                    job.Execute(pauseEvent);
+                    job.Execute(pauseEvent, _transferGate);
                 }
                 finally
                 {

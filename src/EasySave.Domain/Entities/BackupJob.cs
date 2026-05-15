@@ -11,8 +11,8 @@ public class BackupJob(string name, string source, string target, IBackupStrateg
     public List<string> TypesToEncrypt { get; init; } = TypesToEncrypt;
     public string EncryptKey { get; init; } = encryptKey;
 
-    public void Execute(ManualResetEvent pauseEvent)
+    public void Execute(ManualResetEvent pauseEvent, ITransferGate gate)
     {
-        Strategy.Execute(Name, Source, Target,  TypesToEncrypt, EncryptKey, pauseEvent);
+        Strategy.Execute(Name, Source, Target, TypesToEncrypt, EncryptKey, pauseEvent, gate);
     }
 }
