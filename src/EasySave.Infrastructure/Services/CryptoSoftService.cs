@@ -30,9 +30,9 @@ public class CryptoSoftService : IEncryptionService
             }
             catch (System.ComponentModel.Win32Exception)
             {
-                // Couldn't find the path to cryptosoft in environment variables
-                Debug.WriteLine($"Error : {_cryptoSoftExecutableName} wasn't found in the PATH.");
-                return TimeSpan.FromMilliseconds(-3);
+                // CryptoSoft not found in PATH — surface as a real error so the caller can report it
+                throw new FileNotFoundException($"'{_cryptoSoftExecutableName}' was not found in PATH. Please install CryptoSoft.\n " +
+                                                $"https://github.com/cesi-wizards/CryptoSoft/releases/tag/v1.0.0");
             }
             catch (Exception ex)
             {
