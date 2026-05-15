@@ -8,4 +8,7 @@
     ports:
       - "11000:11000"
     volumes:
-      - ./logs:/app/logs
+      - easyserver_logs:/app/logs
+
+volumes:
+  easyserver_logs:
