@@ -57,4 +57,16 @@
   <!-- Common -->
   <data name="CancelButton" xml:space="preserve"><value>Cancel</value></data>
   <data name="SaveButton" xml:space="preserve"><value>Save</value></data>
+  <data name="PriorityExtensionsLabel" xml:space="preserve">
+      <value>Priority files extensions</value>
+  </data>
+  <data name="LargeFileThresholdLabel" xml:space="preserve">
+      <value>Max parallel size file</value>
+  </data>
+  <data name="PriorityExtensionsDescription" xml:space="preserve">
+      <value>File types to transfer in priority (e.g. .pdf, .png)</value>
+  </data>
+  <data name="LargeFileThresholdDescription" xml:space="preserve">
+      <value>The files with a size superior as this value (Ko) will not be transfer in parallel (0 disable the functionnality)</value>
+  </data>
 </root>

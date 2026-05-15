@@ -3,11 +3,12 @@
              xmlns:vm="using:EasySave.GUI.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:system="clr-namespace:System;assembly=System.Runtime"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:DataType="vm:SettingsPageViewModel"
              x:Class="EasySave.GUI.Views.SettingsPage">
 
-    <ScrollViewer Padding="24,0,24,24">
+    <ScrollViewer x:Name="SettingsRoot" Padding="24,0,24,24">
         <StackPanel Spacing="20" MaxWidth="480">
 
             <!-- Log Format -->
@@ -27,19 +28,6 @@
                 </Border>
             </StackPanel>
 
-            <!-- Blocking Application -->
-            <StackPanel Spacing="5">
-                <TextBlock Text="{Binding Localization[BlockingApplicationLabel]}"
-                           FontSize="12" FontWeight="SemiBold"
-                           Foreground="{StaticResource TextPrimary}"/>
-                <TextBlock Text="{Binding Localization[BlockingApplicationDescription]}"
-                           FontSize="11" Foreground="{StaticResource TextMuted}"
-                           TextWrapping="Wrap"/>
-                <TextBox Classes="modern"
-                         Text="{Binding BlockingApp}"
-                         PlaceholderText="{Binding Localization[BlockingAppPlaceholder]}"/>
-            </StackPanel>
-
             <!-- Log server -->
             <StackPanel Spacing="5">
                 <TextBlock Text="{Binding Localization[LogEmplacementTitle]}"
@@ -57,6 +45,81 @@
                                       IsChecked="{Binding IsServerAndLocalLog}"/>
                     </Grid>
                 </Border>
+            </StackPanel>
+
+            <!-- Blocking Application -->
+            <StackPanel Spacing="5">
+                <TextBlock Text="{Binding Localization[BlockingApplicationLabel]}"
+                           FontSize="12" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextPrimary}"/>
+                <TextBlock Text="{Binding Localization[BlockingApplicationDescription]}"
+                           FontSize="11" Foreground="{StaticResource TextMuted}"
+                           TextWrapping="Wrap"/>
+                <TextBox Classes="modern"
+                         Text="{Binding BlockingApp}"
+                         PlaceholderText="{Binding Localization[BlockingAppPlaceholder]}"/>
+            </StackPanel>
+
+            <!-- Priority extensions -->
+            <StackPanel Spacing="5">
+                <TextBlock Text="{Binding Localization[PriorityExtensionsLabel]}"
+                           FontSize="12" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextPrimary}"/>
+                <TextBlock Text="{Binding Localization[PriorityExtensionsDescription]}"
+                           FontSize="11" Foreground="{StaticResource TextMuted}"
+                           TextWrapping="Wrap"/>
+                <Grid ColumnDefinitions="*,6,Auto">
+                    <TextBox Grid.Column="0" Classes="modern"
+                             Text="{Binding ExtensionInput}"
+                             PlaceholderText=".ext"/>
+                    <Button Grid.Column="2"
+                            Content="{Binding Localization[AddButton]}"
+                            Command="{Binding AddExtensionCommand}"
+                            Height="36" Padding="14,0" CornerRadius="8"
+                            FontSize="13" FontWeight="SemiBold"
+                            Background="#F3F4F6"
+                            BorderThickness="0"
+                            Foreground="#374151"
+                            VerticalContentAlignment="Center"/>
+                </Grid>
+                <ItemsControl ItemsSource="{Binding PriorityExtensions}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="system:String">
+                            <Border Background="#E5E7EB" CornerRadius="6" Padding="8,4" Margin="0,4,6,0">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="{Binding}" VerticalAlignment="Center" FontSize="12"/>
+                                    <Button Content="×"
+                                            Command="{Binding $parent[UserControl].((vm:SettingsPageViewModel)DataContext).RemoveExtensionCommand}"
+                                            CommandParameter="{Binding}"
+                                            Padding="0" Width="16" Height="16"
+                                            Background="Transparent" BorderThickness="0"
+                                            FontSize="14" FontWeight="Bold"
+                                            Foreground="#6B7280"
+                                            VerticalContentAlignment="Center"
+                                            HorizontalContentAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- Large file threshold -->
+            <StackPanel Spacing="5">
+                <TextBlock Text="{Binding Localization[LargeFileThresholdLabel]}"
+                           FontSize="12" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextPrimary}"/>
+                <TextBlock Text="{Binding Localization[LargeFileThresholdDescription]}"
+                           FontSize="11" Foreground="{StaticResource TextMuted}"
+                           TextWrapping="Wrap"/>
+                <TextBox Classes="modern"
+                         Text="{Binding LargeFileSizeThresholdKb}"
+                         PlaceholderText="0"/>
             </StackPanel>
 
         </StackPanel>
