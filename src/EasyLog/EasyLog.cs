@@ -8,8 +8,12 @@ public class EasyLog : IEasyLog
     // Instance (singleton design pattern)
     private static EasyLog? _instance;
 
-    // Locker for multithreading
+    // Locker for multithreading (singleton creation)
     private static readonly Lock _lock = new();
+
+    // Semaphore for Write — SemaphoreSlim(1,1) acts as a mutex but is safe
+    // to use alongside async calls (no sync-context deadlock risk)
+    private static readonly SemaphoreSlim _writeSemaphore = new(1, 1);
 
     private AbstractLogger? _localLogger;
 
@@ -104,27 +108,33 @@ public class EasyLog : IEasyLog
     {
         string format = type.ToLower();
 
-        lock (_lock)
+        _writeSemaphore.Wait();
+        try
         {
             if (!string.IsNullOrWhiteSpace(serverName) && serverPort > 0)
             {
                 CreateDistantLogger(format, serverName, serverPort);
                 if (_distantLogger == null)
-                {
                     throw new InvalidOperationException("DistantLogger wasn't initialised when requesting distant log saving, fatal error");
-                }
-                _distantLogger.SendToRemoteServerAsync(content).GetAwaiter().GetResult();
+
+                // Task.Run detaches from the current synchronisation context so
+                // continuations inside SendToRemoteServerAsync can complete on any
+                // thread-pool thread — prevents the deadlock that would occur with
+                // GetAwaiter().GetResult() directly inside a lock / sync context.
+                Task.Run(() => _distantLogger.SendToRemoteServerAsync(content)).GetAwaiter().GetResult();
             }
 
             if (!string.IsNullOrWhiteSpace(filePath))
             {
                 CreateLocalLogger(format, filePath);
                 if (_localLogger == null)
-                {
                     throw new InvalidOperationException("LocalLogger wasn't initialised when requesting local log saving, fatal error");
-                }
                 _localLogger.Write(content);
             }
+        }
+        finally
+        {
+            _writeSemaphore.Release();
         }
     }
 }
