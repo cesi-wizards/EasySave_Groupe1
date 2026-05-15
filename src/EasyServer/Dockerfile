@@ -25,4 +25,5 @@ COPY --from=build /app/publish .
 VOLUME /app/logs
 EXPOSE 11000
 
+USER $APP_UID
 ENTRYPOINT ["dotnet", "EasyServer.dll"]
