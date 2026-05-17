@@ -15,6 +15,7 @@ public class JobManager
 
     private readonly List<string> _businessSoftwares;
     private readonly ISoftwareDetector _softwareDetector;
+    private string _logEmplacement = "local";
 
     private readonly ConcurrentDictionary<string, Lazy<Task>> _runningJobs = new();
     private readonly ConcurrentDictionary<string, ManualResetEvent> _pauseEvents = new();
@@ -29,7 +30,7 @@ public class JobManager
     public void AddJob(BackupConfig config, ISubscriber? extraSubscriber = null)
     {
         ISubscriber stateTracker = new StateTracker();
-        ISubscriber dailyLogger = new DailyLogger(config.LogFileType);
+        ISubscriber dailyLogger = new DailyLogger(config.LogFileType, _logEmplacement);
 
         List<ISubscriber> subscribers = [stateTracker, dailyLogger];
         if (extraSubscriber is not null)
@@ -59,6 +60,8 @@ public class JobManager
             // _pauseEvents intentionally not touched : la task en cours possède son MRE et le dispose dans son finally
         }
     }
+
+    public void SetLogEmplacement(string logEmplacement) => _logEmplacement = logEmplacement;
 
     public void SetBusinessSoftwares(IEnumerable<string> businessSoftwares)
     {

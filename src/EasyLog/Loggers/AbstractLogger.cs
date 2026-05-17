@@ -1,17 +1,8 @@
 namespace EasyLog.Loggers;
 
-/*
-* Logger interface
-*/
-
-public abstract class AbstractLogger
+public abstract class AbstractLogger(string filePath)
 {
-    public string FilePath { get; protected set; }
-
-    protected AbstractLogger(string filePath)
-    {
-        FilePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
-    }
+    public string FilePath { get; init; } = filePath ?? throw new ArgumentNullException(nameof(filePath));
 
     public abstract void  Write(Dictionary<string, object> content);
 

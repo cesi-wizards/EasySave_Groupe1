@@ -1,14 +1,11 @@
 using System.Xml.Linq;
-using EasyLog.Loggers;
 
 namespace EasyLog.Loggers;
 
-public class XmlLogger : AbstractLogger
+public class XmlLogger(string filePath) : AbstractLogger(FilePathToXmlPath(filePath))
 {
     // Locker for multithreading
     private static readonly object _lock = new();
-
-    public XmlLogger(string filePath) : base(FilePathToXmlPath(filePath)) {}
 
     public override void Write(Dictionary<string, object> dictionaryContent)
     {
@@ -38,7 +35,7 @@ public class XmlLogger : AbstractLogger
 
     private string ContentToXml(Dictionary<string, object> dictionaryContent)
     {
-        if (dictionaryContent == null || dictionaryContent.Count == 0)
+        if (dictionaryContent.Count == 0)
         {
             return new XElement("LogEntry").ToString(SaveOptions.DisableFormatting);
         }
@@ -82,7 +79,7 @@ public class XmlLogger : AbstractLogger
     {
         try
         {
-            // We put the content between banners for xml format validity
+            // We put the content between banners for XML format validity
             string initialContent = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" + Environment.NewLine +
                                     "<Logs>" + Environment.NewLine +
                                     "  " + xmlContent + Environment.NewLine +
@@ -100,9 +97,9 @@ public class XmlLogger : AbstractLogger
         try
         {
             // we load the existing file
-            XDocument doc = XDocument.Load(FilePath);
+            var doc = XDocument.Load(FilePath);
 
-            XElement newEntry = XElement.Parse(xmlContent);
+            var newEntry = XElement.Parse(xmlContent);
 
             doc.Root?.Add(newEntry);
 

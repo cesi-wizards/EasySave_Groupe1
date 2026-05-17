@@ -45,6 +45,10 @@
                                       IsChecked="{Binding IsServerAndLocalLog}"/>
                     </Grid>
                 </Border>
+                <TextBlock IsVisible="{Binding IsServerMode}"
+                           FontSize="11" Foreground="{StaticResource TextMuted}"
+                           Text="localhost:11000"
+                           TextWrapping="Wrap"/>
             </StackPanel>
 
             <!-- Blocking Application -->

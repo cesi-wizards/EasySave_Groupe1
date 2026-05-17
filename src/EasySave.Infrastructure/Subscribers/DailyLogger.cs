@@ -5,12 +5,16 @@ namespace EasySave.Infrastructure.Subscribers;
 
 public class DailyLogger : ISubscriber
 {
+    private const string ServerAddress = "localhost";
+    private const int    ServerPort    = 11000;
 
-    private string _logFileType;
+    private readonly string _logFileType;
+    private readonly string _logEmplacement;
 
-    public DailyLogger(string logFileType)
+    public DailyLogger(string logFileType, string logEmplacement = "local")
     {
-        _logFileType = logFileType;
+        _logFileType    = logFileType;
+        _logEmplacement = logEmplacement;
     }
 
     private string GetLogFilePath()
@@ -60,6 +64,9 @@ public class DailyLogger : ISubscriber
 
     private void WriteToFile(Dictionary<string, object> content)
     {
-        EasyLog.EasyLog.Instance.Write(GetLogFilePath(), content, _logFileType);
+        string filePath   = _logEmplacement is "local" or "both" ? GetLogFilePath() : string.Empty;
+        string serverName = _logEmplacement is "server" or "both" ? ServerAddress    : string.Empty;
+        int    port       = _logEmplacement is "server" or "both" ? ServerPort        : 0;
+        EasyLog.EasyLog.Instance.Write(filePath, content, _logFileType, serverName, port);
     }
 }
