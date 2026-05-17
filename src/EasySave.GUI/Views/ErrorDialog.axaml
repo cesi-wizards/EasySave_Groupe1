@@ -57,9 +57,16 @@
             <Border Background="#FEF2F2" CornerRadius="8"
                     BorderBrush="#FECACA" BorderThickness="1"
                     Padding="12,10">
-                <TextBlock Text="{Binding Message}"
-                           FontSize="13" Foreground="#991B1B"
-                           TextWrapping="Wrap"/>
+                <StackPanel Spacing="6">
+                    <SelectableTextBlock Text="{Binding Message}"
+                               FontSize="13" Foreground="#991B1B"
+                               TextWrapping="Wrap"/>
+                    <HyperlinkButton NavigateUri="{Binding ActionUrl}"
+                                     IsVisible="{Binding HasActionUrl}"
+                                     Content="{Binding ActionUrl}"
+                                     FontSize="12"
+                                     Padding="0"/>
+                </StackPanel>
             </Border>
 
             <!-- Stack trace (collapsible) -->
@@ -69,7 +76,7 @@
                 <ScrollViewer MaxHeight="160"
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Auto">
-                    <TextBlock Text="{Binding Details}"
+                    <SelectableTextBlock Text="{Binding Details}"
                                FontSize="11" Foreground="#6B7280"
                                FontFamily="Monospace"
                                TextWrapping="NoWrap"
