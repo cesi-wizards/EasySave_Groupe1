@@ -1,63 +1,63 @@
-# EasySave — Guide développeur (v3.0)
+# EasySave — Developer Guide (v3.0)
 
-> Ce README est destiné à la reprise du code. Pour la documentation utilisateur, référez-vous au manuel utilisateur fourni séparément.
+> This README is intended for code handover. For user documentation, please refer to the separately provided user manual.
 
 ---
 
-## Table des matières
+## Table of Contents
 
-1. [Stack technique](#1-stack-technique)
-2. [Structure du projet](#2-structure-du-projet)
+1. [Technical Stack](#1-technical-stack)
+2. [Project Structure](#2-project-structure)
 3. [Architecture](#3-architecture)
-4. [Patterns de conception](#4-patterns-de-conception)
-5. [Flux d'exécution clés](#5-flux-dexécution-clés)
-6. [Système de configuration](#6-système-de-configuration)
-7. [Synchronisation et concurrence](#7-synchronisation-et-concurrence)
-8. [Journalisation — EasyLog](#8-journalisation--easylog)
-9. [Conventions de code](#9-conventions-de-code)
-10. [Workflow Git](#10-workflow-git)
-11. [Étendre le projet](#11-étendre-le-projet)
-12. [Build & lancement](#12-build--lancement)
+4. [Design Patterns](#4-design-patterns)
+5. [Key Execution Flows](#5-key-execution-flows)
+6. [Configuration System](#6-configuration-system)
+7. [Synchronization and Concurrency](#7-synchronization-and-concurrency)
+8. [Logging — EasyLog](#8-logging--easylog)
+9. [Coding Conventions](#9-coding-conventions)
+10. [Git Workflow](#10-git-workflow)
+11. [Extending the Project](#11-extending-the-project)
+12. [Build & Launch](#12-build--launch)
 
 ---
 
-## 1. Stack technique
+## 1. Technical Stack
 
-| Élément | Choix                                                                               |
+| Element | Choice                                                                               |
 |---|-------------------------------------------------------------------------------------|
 | Runtime | .NET 10                                                                             |
 | UI | [Avalonia](https://avaloniaui.net/) 12.0.1 (cross-platform — Windows, macOS, Linux) |
 | MVVM | CommunityToolkit.Mvvm 8.4.1                                                         |
-| Thème UI | Avalonia.Themes.Fluent                                                              |
-| Sérialisation | `System.Text.Json` (intégré)                                                        |
-| Chiffrement | Processus externe `CryptoSoft` (voir §5)                                            |
-| Logging | `EasyLog` — DLL, disponible en package NuGet                                        |
-| Format solution | `.slnx` (nouveau format Visual Studio / Rider)                                      |
+| UI Theme | Avalonia.Themes.Fluent                                                              |
+| Serialization | `System.Text.Json` (built-in)                                                       |
+| Encryption | External process `CryptoSoft` (see §5)                                              |
+| Logging | `EasyLog` — DLL, available as NuGet package                                         |
+| Solution format | `.slnx` (new Visual Studio / Rider format)                                          |
 
-**Pas de DI container** — l'injection de dépendances est faite manuellement dans les factories.
-**Pas de base de données** — toute la persistance passe par des fichiers JSON/XML.
-**Pas de tests automatisés** (à date) — le domain layer est conçu pour en accueillir.
+**No DI container** — dependency injection is done manually in the factories.
+**No database** — all persistence is done through JSON/XML files.
+**No automated tests** (to date) — the domain layer is designed to accommodate them.
 
 ---
 
-## 2. Structure du projet
+## 2. Project Structure
 
 ```
 EasySave_Groupe1/
 ├── src/
-│   ├── EasySave.Domain/          # Entités, interfaces, stratégies
+│   ├── EasySave.Domain/          # Entities, interfaces, strategies
 │   ├── EasySave.Application/     # Orchestration (JobManager, TransferGate)
-│   ├── EasySave.Infrastructure/  # Factories, services, abonnés, parsers
-│   ├── EasySave.GUI/             # UI Avalonia + ViewModels
-│   ├── EasySave.CLI/             # Point d'entrée ligne de commande
-│   └── EasyLog/                  # Bibliothèque de logging autonome
-├── Directory.Build.props         # Paramètres MSBuild partagés (TFM, nullable, etc.)
+│   ├── EasySave.Infrastructure/  # Factories, services, subscribers, parsers
+│   ├── EasySave.GUI/             # Avalonia UI + ViewModels
+│   ├── EasySave.CLI/             # Command line entry point
+│   └── EasyLog/                  # Standalone logging library
+├── Directory.Build.props         # Shared MSBuild parameters (TFM, nullable, etc.)
 ├── EasySave.slnx
 ├── README.md
 └── CONTRIBUTING.md
 ```
 
-### Dépendances entre projets
+### Project dependencies
 
 ```
 EasySave.GUI  ──────────────────────────────────────┐
@@ -70,151 +70,151 @@ EasySave.CLI  ──────────────────────
                                               └── EasyLog
 ```
 
-La couche Domain n'a **aucune dépendance externe** — elle ne connaît pas l'infrastructure, ni l'UI.
+The Domain layer has **no external dependencies** — it does not know about the infrastructure, nor the UI.
 
 ---
 
 ## 3. Architecture
 
-Le projet suit la **Clean Architecture** : les dépendances vont toujours vers l'intérieur (Domain), jamais vers l'extérieur.
+The project follows **Clean Architecture**: dependencies always point inwards (Domain), never outwards.
 
 ### 3.1 Domain (`EasySave.Domain`)
 
-Contient le cœur métier, sans aucune dépendance sur des frameworks tiers.
+Contains the business core, without any dependency on third-party frameworks.
 
-**Entités principales :**
-- `BackupJob` — un job de sauvegarde nommé avec sa source, sa destination, sa stratégie et sa config de chiffrement
-- `BackupConfig` — DTO de création d'un job (passé des couches supérieures vers le domain)
-- `FileConfig` — racine désérialisée du `config.json`
+**Main entities:**
+- `BackupJob` — a named backup job with its source, destination, strategy, and encryption config
+- `BackupConfig` — DTO for creating a job (passed from upper layers to the domain)
+- `FileConfig` — deserialized root of `config.json`
 
-**Interfaces clés :**
+**Key interfaces:**
 
-| Interface | Rôle |
+| Interface | Role |
 |---|---|
-| `IBackupStrategy` | Contrat d'exécution d'une sauvegarde |
-| `IPublisher` | Attache / détache des `ISubscriber` |
-| `ISubscriber` | Reçoit un `IBackupEvent` lors de la progression |
-| `ITransferGate` | Contrôle la priorité et la concurrence des transferts |
-| `IEncryptionService` | Abstraction du chiffrement fichier |
-| `ISoftwareDetector` | Détecte un processus bloquant |
+| `IBackupStrategy` | Backup execution contract |
+| `IPublisher` | Attaches / detaches `ISubscriber`s |
+| `ISubscriber` | Receives an `IBackupEvent` during progression |
+| `ITransferGate` | Controls transfer priority and concurrency |
+| `IEncryptionService` | File encryption abstraction |
+| `ISoftwareDetector` | Detects a blocking process |
 
-**Modèles d'événements (records immuables) :**
+**Event models (immutable records):**
 ```
 IBackupEvent
-  ├── FileTransferReady    (fichier sur le point d'être copié)
-  ├── FileTransferSuccess  (copie réussie, inclut durée de transfert et de chiffrement)
-  ├── FileTransferFailure  (exception pendant la copie)
-  ├── BackupCompleted      (job terminé)
-  └── BackupInterrupted    (logiciel bloquant détecté)
+  ├── FileTransferReady    (file about to be copied)
+  ├── FileTransferSuccess  (copy successful, includes transfer and encryption duration)
+  ├── FileTransferFailure  (exception during copy)
+  ├── BackupCompleted      (job completed)
+  └── BackupInterrupted    (blocking software detected)
 ```
 
-**Implémentations des stratégies (aussi dans Domain) :**
-- `AbstractBackupStrategy` — Template Method + IPublisher ; gère la boucle de copie, la pause, le chiffrement et la publication d'événements
-- `FullBackupStrategy` — copie tous les fichiers
-- `DifferentialBackupStrategy` — copie uniquement les fichiers dont le `LastWriteTime` est postérieur à la dernière sauvegarde
+**Strategy implementations (also in Domain):**
+- `AbstractBackupStrategy` — Template Method + `IPublisher`; handles the copy loop, pause, encryption, and event publication
+- `FullBackupStrategy` — copies all files
+- `DifferentialBackupStrategy` — copies only files whose `LastWriteTime` is later than the last backup
 
 ### 3.2 Application (`EasySave.Application`)
 
-- `JobManager` — cycle de vie complet des jobs : ajout, exécution concurrente (`ConcurrentDictionary<string, Lazy<Task>>`), pause/reprise par `ManualResetEvent`
-- `TransferGate` — implémente `ITransferGate` ; deux mécanismes de synchronisation (voir §7)
+- `JobManager` — complete job lifecycle: addition, concurrent execution (`ConcurrentDictionary<string, Lazy<Task>>`), pause/resume via `ManualResetEvent`
+- `TransferGate` — implements `ITransferGate`; two synchronization mechanisms (see §7)
 
 ### 3.3 Infrastructure (`EasySave.Infrastructure`)
 
-| Sous-dossier | Contenu |
+| Subfolder | Content |
 |---|---|
-| `Factories/` | `AbstractBackupFactory`, `FullBackupFactory`, `DifferentialBackupFactory` — instancient les jobs et câblent les abonnés |
-| `Services/` | `CryptoSoftService` (chiffrement via processus externe), `SoftwareDetector` (détection de processus) |
-| `Subscribers/` | `StateTracker` (état temps réel → `Logs/states.json`), `DailyLogger` (délègue à EasyLog) |
-| `Parsers/` | `JsonParser` — désérialise `FileConfig` depuis un fichier JSON |
+| `Factories/` | `AbstractBackupFactory`, `FullBackupFactory`, `DifferentialBackupFactory` — instantiate jobs and wire up subscribers |
+| `Services/` | `CryptoSoftService` (encryption via external process), `SoftwareDetector` (process detection) |
+| `Subscribers/` | `StateTracker` (real-time state → `Logs/states.json`), `DailyLogger` (delegates to EasyLog) |
+| `Parsers/` | `JsonParser` — deserializes `FileConfig` from a JSON file |
 
 ### 3.4 GUI (`EasySave.GUI`)
 
-UI Avalonia en MVVM strict avec `CommunityToolkit.Mvvm`.
+Avalonia UI in strict MVVM with `CommunityToolkit.Mvvm`.
 
-**ViewModels principaux :**
+**Main ViewModels:**
 
-| ViewModel | Rôle |
+| ViewModel | Role |
 |---|---|
-| `MainWindowViewModel` | Racine — coordonne tous les onglets |
-| `JobsPageViewModel` | Collection de jobs, déclenche start / pause / resume / remove |
-| `BackupJobViewModel` | Représente un job dans l'UI ; **implémente `ISubscriber`** pour recevoir les événements et mettre à jour la progression |
-| `SettingsPageViewModel` | Extensions prioritaires, apps bloquantes, seuil grands fichiers, format de log |
-| `BackupConfigDialogViewModel` | Formulaire de création d'un nouveau job |
-| `LogsPageViewModel` | Liste et ouvre les fichiers de log |
+| `MainWindowViewModel` | Root — coordinates all tabs |
+| `JobsPageViewModel` | Job collection, triggers start / pause / resume / remove |
+| `BackupJobViewModel` | Represents a job in the UI; **implements `ISubscriber`** to receive events and update progression |
+| `SettingsPageViewModel` | Priority extensions, blocking apps, large file threshold, log format |
+| `BackupConfigDialogViewModel` | Form for creating a new job |
+| `LogsPageViewModel` | Lists and opens log files |
 
-**ViewLocator** (`ViewLocator.cs`) — convention automatique : supprime le suffixe `ViewModel` pour résoudre la `View` correspondante par réflexion.
+**ViewLocator** (`ViewLocator.cs`) — automatic convention: removes the `ViewModel` suffix to resolve the corresponding `View` via reflection.
 
-**Liaison UI → thread background :** toutes les mises à jour de `BackupJobViewModel` venant d'un thread worker passent par `Dispatcher.UIThread.InvokeAsync()`.
+**UI → background thread binding:** all `BackupJobViewModel` updates coming from a worker thread go through `Dispatcher.UIThread.InvokeAsync()`.
 
 ### 3.5 CLI (`EasySave.CLI`)
 
-Point d'entrée console. Parse les arguments (ex. `1-3`, `1;3`), charge le `config.json`, instancie les jobs via `JobManager`, exécute en `Task.WhenAll()`.
+Console entry point. Parses arguments (e.g., `1-3`, `1;3`), loads `config.json`, instantiates jobs via `JobManager`, executes using `Task.WhenAll()`.
 
 ---
 
-## 4. Patterns de conception
+## 4. Design Patterns
 
-| Pattern | Où | Pourquoi |
+| Pattern | Where | Why |
 |---|---|---|
-| **Strategy** | `IBackupStrategy` + Full / Differential | Changer l'algorithme de sauvegarde sans modifier `BackupJob` |
-| **Observer** | `IPublisher` / `ISubscriber` + événements | Découpler l'exécution de la sauvegarde du logging, du tracking d'état et de l'UI |
-| **Abstract Factory** | `AbstractBackupFactory` + sous-classes | Créer un job complet (stratégie + abonnés câblés) en un seul appel |
-| **Template Method** | `AbstractBackupStrategy.Execute()` | Définir le squelette de la boucle de copie ; `GetBackupFiles()` est surchargé par les sous-classes |
-| **Singleton** | `EasyLog`, `LocalizationService` | Instance unique partagée, thread-safe |
-| **DTO** | `BackupConfig`, `FileConfig` | Transport de données entre couches sans exposer les entités domain |
-| **View Locator** | `ViewLocator.cs` | Convention-over-configuration pour le mapping VM → View en Avalonia |
+| **Strategy** | `IBackupStrategy` + Full / Differential | Change the backup algorithm without modifying `BackupJob` |
+| **Observer** | `IPublisher` / `ISubscriber` + events | Decouple backup execution from logging, state tracking, and UI |
+| **Abstract Factory** | `AbstractBackupFactory` + subclasses | Create a complete job (strategy + wired subscribers) in a single call |
+| **Template Method** | `AbstractBackupStrategy.Execute()` | Define the skeleton of the copy loop; `GetBackupFiles()` is overridden by subclasses |
+| **Singleton** | `EasyLog`, `LocalizationService` | Single shared instance, thread-safe |
+| **DTO** | `BackupConfig`, `FileConfig` | Data transport between layers without exposing domain entities |
+| **View Locator** | `ViewLocator.cs` | Convention-over-configuration for VM → View mapping in Avalonia |
 
 ---
 
-## 5. Flux d'exécution clés
+## 5. Key Execution Flows
 
-### Création d'un job (GUI)
+### Job creation (GUI)
 
 ```
 BackupConfigDialog (UI)
   └─► BackupConfigDialogViewModel.Confirm()
         └─► MainWindowViewModel.AddBackupConfig(BackupConfig)
-              └─► JobsPageViewModel : crée BackupJobViewModel (ISubscriber)
+              └─► JobsPageViewModel : creates BackupJobViewModel (ISubscriber)
               └─► JobManager.AddJob(config)
-                    └─► Factory (Full ou Differential)
-                          ├─ crée AbstractBackupStrategy
-                          ├─ attache StateTracker
-                          ├─ attache DailyLogger
-                          ├─ attache BackupJobViewModel
-                          └─ retourne BackupJob
+                    └─► Factory (Full or Differential)
+                          ├─ creates AbstractBackupStrategy
+                          ├─ attaches StateTracker
+                          ├─ attaches DailyLogger
+                          ├─ attaches BackupJobViewModel
+                          └─ returns BackupJob
 ```
 
-### Exécution d'un job
+### Job execution
 
 ```
 JobsPageViewModel.RunOrPauseJob()
-  └─► JobManager.ExecuteJob(name)          ← retourne Task (non bloquant)
+  └─► JobManager.ExecuteJob(name)          ← returns Task (non-blocking)
         └─► Task.Run(() =>
               BackupJob.Execute(pauseEvent, transferGate)
                 └─► AbstractBackupStrategy.Execute()
-                      ├─ vérifie ISoftwareDetector → publie BackupInterrupted si bloqué
+                      ├─ checks ISoftwareDetector → publishes BackupInterrupted if blocked
                       ├─ GetBackupFiles() → IEnumerable<FileInfo> (lazy)
-                      ├─ Pour chaque fichier :
-                      │    ├─ pauseEvent.WaitOne()          ← point de pause
-                      │    ├─ publie FileTransferReady
-                      │    ├─ TransferGate.Acquire()        ← priorité / grands fichiers
+                      ├─ For each file:
+                      │    ├─ pauseEvent.WaitOne()          ← pause point
+                      │    ├─ publishes FileTransferReady
+                      │    ├─ TransferGate.Acquire()        ← priority / large files
                       │    ├─ File.Copy()
-                      │    ├─ CryptoSoftService.Encrypt()   ← si extension concernée
+                      │    ├─ CryptoSoftService.Encrypt()   ← if relevant extension
                       │    ├─ TransferGate.Release()
-                      │    └─ publie FileTransferSuccess / Failure
-                      └─ publie BackupCompleted
+                      │    └─ publishes FileTransferSuccess / Failure
+                      └─ publishes BackupCompleted
             )
 ```
 
-### Chiffrement via CryptoSoft
+### Encryption via CryptoSoft
 
-`CryptoSoftService` lance le processus `CryptoSoft` (ou `CryptoSoft.exe` sur Windows) avec le chemin du fichier et la clé en arguments. Le code de retour du processus est interprété comme la durée de chiffrement en millisecondes. Si l'exécutable est introuvable, une `FileNotFoundException` est propagée jusqu'à l'UI sous forme de dialog d'erreur.
+`CryptoSoftService` launches the `CryptoSoft` process (or `CryptoSoft.exe` on Windows) with the file path and key as arguments. The process's return code is interpreted as the encryption duration in milliseconds. If the executable is not found, a `FileNotFoundException` is propagated up to the UI as an error dialog.
 
 ---
 
-## 6. Système de configuration
+## 6. Configuration System
 
-### Fichier `config.json`
+### `config.json` File
 
 ```json
 {
@@ -236,144 +236,144 @@ JobsPageViewModel.RunOrPauseJob()
 }
 ```
 
-**Champ `type`** : `"Full"` ou `"Differential"` (insensible à la casse).
-**Chiffrement** : `typesToEncrypt` et `encryptKey` sont optionnels ; si absents, aucun chiffrement n'est appliqué.
-**`logEmplacement`** : `"local"`, `"server"` ou `"both"` — contrôle où les logs sont écrits.
+**`type` field**: `"Full"` or `"Differential"` (case-insensitive).
+**Encryption**: `typesToEncrypt` and `encryptKey` are optional; if absent, no encryption is applied.
+**`logEmplacement`**: `"local"`, `"server"`, or `"both"` — controls where logs are written.
 
-### Flux de chargement
+### Loading Flow
 
-- **GUI** : le chemin est sélectionné via un dialog au démarrage ; `JsonParser.Parse()` désérialise vers `FileConfig`, puis `JobManager.AddJob()` est appelé pour chaque entrée.
-- **CLI** : le chemin est passé en dur ou en premier argument ; même pipeline `JsonParser → FileConfig → JobManager`.
+- **GUI**: the path is selected via a dialog on startup; `JsonParser.Parse()` deserializes to `FileConfig`, then `JobManager.AddJob()` is called for each entry.
+- **CLI**: the path is hardcoded or passed as the first argument; same pipeline `JsonParser → FileConfig → JobManager`.
 
-### `AppSettings` (GUI uniquement)
+### `AppSettings` (GUI only)
 
-`AppSettings` est un `ObservableObject` qui maintient en mémoire les réglages modifiables depuis l'onglet Paramètres. Les changements sont persistés dans `config.json` à la fermeture ou à la demande.
-
----
-
-## 7. Synchronisation et concurrence
-
-Deux mécanismes distincts coexistent dans `TransferGate` :
-
-### Priorité d'extension
-
-Les fichiers dont l'extension figure dans `priorityExtensions` sont traités **avant** tous les autres.
-
-- La stratégie trie les fichiers et compte les fichiers prioritaires.
-- Les fichiers non-prioritaires appellent `_priorityGate.Wait()` (`ManualResetEventSlim`).
-- Quand le dernier fichier prioritaire est traité, `_priorityGate.Set()` débloque les autres.
-
-### Limitation des grands fichiers
-
-Un seul fichier dépassant `largeFileSizeThresholdKb` peut être transféré à la fois.
-
-- `_largeFileLock` est un `SemaphoreSlim(1, 1)`.
-- Tout fichier volumineux appelle `_largeFileLock.Wait()` avant la copie et `_largeFileLock.Release()` après.
-
-### Pause / reprise
-
-Chaque job possède un `ManualResetEvent` dédié (initialement signalé = `true`).
-- `JobManager.PauseJob(name)` → `pauseEvent.Reset()` — bloque au prochain `WaitOne()` dans la boucle de copie.
-- `JobManager.ResumeJob(name)` → `pauseEvent.Set()` — reprend.
+`AppSettings` is an `ObservableObject` that keeps in memory the settings modifiable from the Settings tab. Changes are persisted to `config.json` upon closing or on demand.
 
 ---
 
-## 8. Journalisation — EasyLog
+## 7. Synchronization and Concurrency
 
-`EasyLog` est une bibliothèque autonome (pas de dépendance vers les autres projets EasySave).
+Two distinct mechanisms coexist in `TransferGate`:
 
-- **Singleton** `EasyLog` — point d'entrée unique.
-- **Strategy** interne : `JsonLogger` (JSONL — une entrée JSON par ligne) ou `XmlLogger`.
-- Le format est choisi par `logFileType` dans `config.json`.
-- Les fichiers sont nommés par date et écrits dans `Logs/`.
-- `StateTracker` écrit `Logs/states.json` en temps réel avec une écriture atomique (write → `.tmp` → rename).
+### Extension Priority
+
+Files whose extension is in `priorityExtensions` are processed **before** all others.
+
+- The strategy sorts files and counts priority files.
+- Non-priority files call `_priorityGate.Wait()` (`ManualResetEventSlim`).
+- When the last priority file is processed, `_priorityGate.Set()` unblocks the others.
+
+### Large File Limitation
+
+Only one file exceeding `largeFileSizeThresholdKb` can be transferred at a time.
+
+- `_largeFileLock` is a `SemaphoreSlim(1, 1)`.
+- Any large file calls `_largeFileLock.Wait()` before copying and `_largeFileLock.Release()` afterwards.
+
+### Pause / Resume
+
+Each job has a dedicated `ManualResetEvent` (initially signaled = `true`).
+- `JobManager.PauseJob(name)` → `pauseEvent.Reset()` — blocks at the next `WaitOne()` in the copy loop.
+- `JobManager.ResumeJob(name)` → `pauseEvent.Set()` — resumes.
 
 ---
 
-## 9. Conventions de code
+## 8. Logging — EasyLog
 
-Voir `CONTRIBUTING.md` pour le détail complet. Résumé des points clés :
+`EasyLog` is a standalone library (no dependency on other EasySave projects).
 
-### Nommage C#
+- **Singleton** `EasyLog` — single entry point.
+- **Strategy** (internal): `JsonLogger` (JSONL — one JSON entry per line) or `XmlLogger`.
+- The format is chosen by `logFileType` in `config.json`.
+- Files are named by date and written in `Logs/`.
+- `StateTracker` writes `Logs/states.json` in real-time using atomic writing (write → `.tmp` → rename).
 
-| Cible | Convention | Exemple |
+---
+
+## 9. Coding Conventions
+
+See `CONTRIBUTING.md` for full details. Summary of key points:
+
+### C# Naming
+
+| Target | Convention | Example |
 |---|---|---|
-| Classes, méthodes, propriétés publiques | PascalCase | `JobManager`, `Execute()` |
-| Variables locales, paramètres | camelCase | `jobName`, `pauseEvent` |
-| Champs privés | _camelCase | `_subscribers`, `_jobManager` |
+| Classes, public methods, public properties | PascalCase | `JobManager`, `Execute()` |
+| Local variables, parameters | camelCase | `jobName`, `pauseEvent` |
+| Private fields | _camelCase | `_subscribers`, `_jobManager` |
 | Interfaces | IPascalCase | `IBackupStrategy` |
-| Enums | PascalCase (singulier) | `BackupType` |
-| Events / records d'événements | `[Action][Résultat]` | `FileTransferSuccess` |
+| Enums | PascalCase (singular) | `BackupType` |
+| Events / event records | `[Action][Result]` | `FileTransferSuccess` |
 
-### Particularités Avalonia / MVVM
+### Avalonia / MVVM Specifics
 
-- Les propriétés observables utilisent `[ObservableProperty]` (CommunityToolkit) — le backing field est généré automatiquement.
-- Les commandes UI utilisent `[RelayCommand]`.
-- Les ViewModels qui ont besoin d'une validation héritent d'`ObservableValidator`.
-- Les bindings sont **compilés** (`AvaloniaUseCompiledBindingsByDefault=true`) — les erreurs de binding sont détectées à la compilation.
+- Observable properties use `[ObservableProperty]` (CommunityToolkit) — the backing field is generated automatically.
+- UI commands use `[RelayCommand]`.
+- ViewModels that require validation inherit from `ObservableValidator`.
+- Bindings are **compiled** (`AvaloniaUseCompiledBindingsByDefault=true`) — binding errors are detected at compile time.
 
-### Style général
+### General Style
 
-- Records pour les données immuables (événements, métadonnées).
-- `init` accessors pour les propriétés settables uniquement à la construction.
-- Pattern matching préféré aux casts explicites.
-- `Directory.EnumerateFiles` (lazy) plutôt que `GetFiles` (eager).
-- Comparaison d'extensions insensible à la casse : `StringComparer.OrdinalIgnoreCase`.
-- Le code documente le *comment*, les commentaires documentent le *pourquoi*.
+- Records for immutable data (events, metadata).
+- `init` accessors for properties settable only at construction.
+- Pattern matching preferred over explicit casts.
+- `Directory.EnumerateFiles` (lazy) rather than `GetFiles` (eager).
+- Case-insensitive extension comparison: `StringComparer.OrdinalIgnoreCase`.
+- The code documents *how*, comments document *why*.
 
 ---
 
-## 10. Workflow Git
+## 10. Git Workflow
 
 ```
-main          ← releases stables uniquement
-  └── dev     ← branche d'intégration principale
-        └── feat/ma-feature   ← toujours brancher depuis dev
+main          ← stable releases only
+  └── dev     ← main integration branch
+        └── feat/ma-feature   ← always branch from dev
         └── fix/mon-bug
         └── refactor/...
 ```
 
-- **Commits** : [Conventional Commits](https://www.conventionalcommits.org/) — `feat:`, `fix:`, `refactor:`, `chore:`, `docs:`
-- **Branches** : `type/short-description` en kebab-case
-- **Versioning** : [SemVer](https://semver.org/) — `Major.Minor.Patch`
+- **Commits**: [Conventional Commits](https://www.conventionalcommits.org/) — `feat:`, `fix:`, `refactor:`, `chore:`, `docs:`
+- **Branches**: `type/short-description` in kebab-case
+- **Versioning**: [SemVer](https://semver.org/) — `Major.Minor.Patch`
 
 ---
 
-## 11. Étendre le projet
+## 11. Extending the Project
 
-### Nouvelle stratégie de sauvegarde
+### New Backup Strategy
 
-1. Créer une classe dans `EasySave.Domain/Strategies/` héritant d'`AbstractBackupStrategy`.
-2. Surcharger `GetBackupFiles(string sourcePath)` pour retourner les fichiers à copier.
-3. Ajouter une valeur à l'enum `BackupType`.
-4. Créer une factory dans `EasySave.Infrastructure/Factories/` héritant d'`AbstractBackupFactory`.
-5. Câbler la factory dans `JobManager.AddJob()`.
+1. Create a class in `EasySave.Domain/Strategies/` inheriting from `AbstractBackupStrategy`.
+2. Override `GetBackupFiles(string sourcePath)` to return the files to copy.
+3. Add a value to the `BackupType` enum.
+4. Create a factory in `EasySave.Infrastructure/Factories/` inheriting from `AbstractBackupFactory`.
+5. Wire the factory in `JobManager.AddJob()`.
 
-### Nouvel abonné (logger, notificateur, etc.)
+### New Subscriber (logger, notifier, etc.)
 
-1. Implémenter `ISubscriber` avec `Update(IBackupEvent e)` dans `EasySave.Infrastructure/Subscribers/`.
-2. L'enregistrer dans la factory concernée via `Attach(subscriber)`.
+1. Implement `ISubscriber` with `Update(IBackupEvent e)` in `EasySave.Infrastructure/Subscribers/`.
+2. Register it in the relevant factory via `Attach(subscriber)`.
 
-### Nouveau format de log
+### New Log Format
 
-1. Créer une classe dans `EasyLog/` héritant d'`AbstractLogger`.
-2. Implémenter `Write(string entry)`.
-3. Câbler dans `EasyLog` selon la valeur de `logFileType`.
+1. Create a class in `EasyLog/` inheriting from `AbstractLogger`.
+2. Implement `Write(string entry)`.
+3. Wire into `EasyLog` according to the `logFileType` value.
 
-### Nouvel écran (GUI)
+### New Screen (GUI)
 
-1. Créer un ViewModel dans `EasySave.GUI/ViewModels/` héritant d'`ObservableObject` (ou `ObservableValidator` si validation).
-2. Créer la View `.axaml` correspondante dans `EasySave.GUI/Views/` — le `ViewLocator` la résout automatiquement.
-3. Exposer le ViewModel depuis `MainWindowViewModel`.
+1. Create a ViewModel in `EasySave.GUI/ViewModels/` inheriting from `ObservableObject` (or `ObservableValidator` if validation is needed).
+2. Create the corresponding `.axaml` View in `EasySave.GUI/Views/` — the `ViewLocator` resolves it automatically.
+3. Expose the ViewModel from `MainWindowViewModel`.
 
 ---
 
-## 12. Build & lancement
+## 12. Build & Launch
 
-### Prérequis
+### Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- `CryptoSoft` (ou `CryptoSoft.exe` sur Windows) accessible dans le `PATH` pour les fonctionnalités de chiffrement
+- `CryptoSoft` (or `CryptoSoft.exe` on Windows) accessible in the `PATH` for encryption features
 
 ### Build
 
@@ -381,32 +381,32 @@ main          ← releases stables uniquement
 dotnet build EasySave.slnx
 ```
 
-### Lancer la GUI
+### Launch GUI
 
 ```bash
 dotnet run --project src/EasySave.GUI
 ```
 
-### Lancer en CLI
+### Launch CLI
 
 ```bash
-# Job unique
+# Single job
 dotnet run --project src/EasySave.CLI 1
 
-# Plage de jobs (1 à 3)
+# Job range (1 to 3)
 dotnet run --project src/EasySave.CLI 1-3
 
-# Jobs non-consécutifs
+# Non-consecutive jobs
 dotnet run --project src/EasySave.CLI 1;3
 ```
 
-Les numéros correspondent à l'ordre de déclaration des jobs dans `config.json`.
+The numbers correspond to the declaration order of the jobs in `config.json`.
 
-### Publier (binaire autonome)
+### Publish (standalone binary)
 
 ```bash
 dotnet publish src/EasySave.GUI -c Release -r win-x64
 dotnet publish src/EasySave.CLI -c Release -r linux-x64
 ```
 
-`Directory.Build.props` configure la publication en **single-file self-contained** par défaut.
+`Directory.Build.props` configures publication as **single-file self-contained** by default.
