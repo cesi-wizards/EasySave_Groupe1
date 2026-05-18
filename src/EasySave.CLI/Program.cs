@@ -1,4 +1,11 @@
-using EasySave.Application.ViewModels;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using EasySave.Application;
+using EasySave.Domain.Entities;
+using EasySave.Domain.Interfaces;
+using EasySave.Infrastructure.Factories;
+using EasySave.Infrastructure.Services;
+using EasySave.Infrastructure.Subscribers;
 
 namespace EasySave.CLI;
 
@@ -6,42 +13,68 @@ public static class Program
 {
     public static void Main(string[] args)
     {
-        string configFilePath = Path.Combine(Directory.GetCurrentDirectory(), "config.json");
-        if (args.Length != 0)
-        {
-            if (!File.Exists(configFilePath))
-            {
-                throw new Exception("Aucun fichier de configuration trouvé à l'emplacement : " + configFilePath);
-            }
-            int[] jobToExecute = GetJobsToExecute(args);
+        if (args.Length == 0) return;
 
-            var viewModel = new MainViewModel(configFilePath, jobToExecute);
-            viewModel.CreateBackupConfig();
-            viewModel.Execute();
+        string configFilePath = Path.Combine(Directory.GetCurrentDirectory(), "config.json");
+        if (!File.Exists(configFilePath))
+            throw new FileNotFoundException("No config file found at: " + configFilePath);
+
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            Converters = { new JsonStringEnumConverter() }
+        };
+
+        FileConfig config = JsonSerializer.Deserialize<FileConfig>(File.ReadAllText(configFilePath), options)
+            ?? throw new InvalidOperationException("Failed to deserialize config file");
+
+        int[] jobIndices = ParseJobIndices(args[0]);
+
+        // --- Composition Root ---
+        var softwareDetector = new SoftwareDetector(config.BusinessSoftwares);
+        var jobManager = new JobManager(softwareDetector, BuildFactory);
+        jobManager.SetPriorityExtensions(config.PriorityExtensions);
+        jobManager.SetLargeFileSizeThreshold(config.LargeFileSizeThresholdKb);
+
+        foreach (int index in jobIndices)
+        {
+            BackupConfig job = config.Jobs[index - 1];
+            job.LogFileType = config.LogFileType;
+
+            ISubscriber[] subscribers =
+            [
+                new StateTracker(),
+                new DailyLogger(job.LogFileType, "local"),
+            ];
+            jobManager.AddJob(job, subscribers);
         }
+
+        jobManager.ExecuteAllJobs().Wait();
     }
 
-    private static int[] GetJobsToExecute(string[] args)
-    {
-        string arg = args[0].Trim();
+    private static IBackupFactory BuildFactory(
+        BackupType type, List<ISubscriber> subscribers, ISoftwareDetector detector) =>
+        type == BackupType.Full
+            ? new FullBackupFactory(subscribers, detector)
+            : new DifferentialBackupFactory(subscribers, detector);
 
-        if (arg.Contains('-', StringComparison.CurrentCultureIgnoreCase))
+    private static int[] ParseJobIndices(string arg)
+    {
+        arg = arg.Trim();
+
+        if (arg.Contains('-'))
         {
-            int firstJob = Int32.Parse(arg.Split("-")[0]);
-            int secondJob = Int32.Parse(arg.Split("-")[1]);
-            return Enumerable.Range(firstJob, secondJob - firstJob + 1).ToArray();
+            int first = int.Parse(arg.Split('-')[0]);
+            int last  = int.Parse(arg.Split('-')[1]);
+            return Enumerable.Range(first, last - first + 1).ToArray();
         }
-        else if (arg.Contains(';', StringComparison.CurrentCultureIgnoreCase))
-        {
+
+        if (arg.Contains(';'))
             return arg.Split(';').Select(int.Parse).ToArray();
-        }
-        else if (arg.Length == 1 && int.TryParse(arg, out _))
-        {
-            return [int.Parse(arg)];
-        }
-        else
-        {
-            return [1]; // Si aucun argument n'est fourni, exécute le job 1 par défaut
-        }
+
+        if (int.TryParse(arg, out int single))
+            return [single];
+
+        return [1];
     }
 }

@@ -1,0 +1,91 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:EasySave.GUI.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="460" d:DesignHeight="320"
+        x:Class="EasySave.GUI.Views.ErrorDialog"
+        x:DataType="vm:ErrorDialogViewModel"
+        Title="{Binding Localization[ErrorDialogTitle]}"
+        Width="460"
+        MinHeight="220"
+        MaxHeight="520"
+        SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="White">
+
+    <Design.DataContext>
+        <vm:ErrorDialogViewModel/>
+    </Design.DataContext>
+
+    <DockPanel>
+
+        <!-- Footer -->
+        <Border DockPanel.Dock="Bottom"
+                BorderBrush="#F3F4F6" BorderThickness="0,1,0,0"
+                Padding="24,12,24,20">
+            <Button Classes="modal-primary"
+                    Content="{Binding Localization[CloseButton]}"
+                    Command="{Binding CloseCommand}"
+                    HorizontalAlignment="Right"
+                    Width="120"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    Padding="0"/>
+        </Border>
+
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Padding="24,20,24,0">
+            <StackPanel Spacing="2">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="⚠" FontSize="17" Foreground="#DC2626"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding Localization[ErrorDialogTitle]}"
+                               FontSize="17" FontWeight="Bold"
+                               Foreground="#111827"/>
+                </StackPanel>
+                <TextBlock Text="{Binding Title}"
+                           FontSize="12" Foreground="#9CA3AF"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Body -->
+        <StackPanel Spacing="12" Margin="24,16,24,0">
+
+            <!-- Message -->
+            <Border Background="#FEF2F2" CornerRadius="8"
+                    BorderBrush="#FECACA" BorderThickness="1"
+                    Padding="12,10">
+                <StackPanel Spacing="6">
+                    <SelectableTextBlock Text="{Binding Message}"
+                               FontSize="13" Foreground="#991B1B"
+                               TextWrapping="Wrap"/>
+                    <HyperlinkButton NavigateUri="{Binding ActionUrl}"
+                                     IsVisible="{Binding HasActionUrl}"
+                                     Content="{Binding ActionUrl}"
+                                     FontSize="12"
+                                     Padding="0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Stack trace (collapsible) -->
+            <Expander Header="{Binding Localization[ErrorDetailsLabel]}"
+                      IsVisible="{Binding HasDetails}"
+                      Padding="0">
+                <ScrollViewer MaxHeight="160"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Auto">
+                    <SelectableTextBlock Text="{Binding Details}"
+                               FontSize="11" Foreground="#6B7280"
+                               FontFamily="Monospace"
+                               TextWrapping="NoWrap"
+                               Margin="0,6,0,0"/>
+                </ScrollViewer>
+            </Expander>
+
+        </StackPanel>
+
+    </DockPanel>
+
+</Window>

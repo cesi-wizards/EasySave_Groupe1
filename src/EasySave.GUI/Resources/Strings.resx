@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+
+  <!-- Sidebar -->
+  <data name="BackupJobsNav" xml:space="preserve"><value>📋Backup Jobs</value></data>
+  <data name="LogsNav" xml:space="preserve"><value>📔Logs</value></data>
+  <data name="SettingsButton" xml:space="preserve"><value>⚙️Settings</value></data>
+  <data name="DoneLabel" xml:space="preserve"><value>DONE</value></data>
+  <data name="ActiveLabel" xml:space="preserve"><value>ACTIVE</value></data>
+  <data name="NewBackup" xml:space="preserve"><value>+ New Backup</value></data>
+
+  <!-- JobsPage -->
+  <data name="NoJobsTitle" xml:space="preserve"><value>No backup jobs yet</value></data>
+  <data name="NoJobsDescription" xml:space="preserve"><value>Create your first backup job to get started protecting your data.</value></data>
+  <data name="RunAllJobPointerover" xml:space="preserve"><value>Run all backup jobs</value></data>
+
+  <!-- BackupConfigDialog -->
+  <data name="BackupConfigTitle" xml:space="preserve"><value>New Backup Job</value></data>
+  <data name="BackupConfigSubtitle" xml:space="preserve"><value>Configure a new backup task</value></data>
+  <data name="NameLabel" xml:space="preserve"><value>Name</value></data>
+  <data name="BackupNamePlaceholder" xml:space="preserve"><value>e.g. Daily Documents Backup</value></data>
+  <data name="SourceDirectoryLabel" xml:space="preserve"><value>Source Directory</value></data>
+  <data name="TargetDirectoryLabel" xml:space="preserve"><value>Target Directory</value></data>
+  <data name="SelectSourceDirectory" xml:space="preserve"><value>Browse</value></data>
+  <data name="SelectTargetDirectory" xml:space="preserve"><value>Browse</value></data>
+  <data name="BackupTypeLabel" xml:space="preserve"><value>Backup Type</value></data>
+  <data name="LogFormatLabel" xml:space="preserve"><value>Log Format</value></data>
+  <data name="EncryptionKeyLabel" xml:space="preserve"><value>Encryption Key</value></data>
+  <data name="EncryptionKeyHint" xml:space="preserve"><value>Leave empty to skip encryption</value></data>
+  <data name="EncryptionKeyPlaceholder" xml:space="preserve"><value>Enter a key to encrypt files…</value></data>
+  <data name="EncryptedExtensionsLabel" xml:space="preserve"><value>Encrypted Extensions</value></data>
+  <data name="EncryptedExtensionsHint" xml:space="preserve"><value>File types to encrypt (e.g. .pdf, .docx)</value></data>
+  <data name="AddButton" xml:space="preserve"><value>Add</value></data>
+  <data name="CreateButton" xml:space="preserve"><value>Create Backup</value></data>
+  <data name="SelectFolderTitle" xml:space="preserve"><value>Select a Folder</value></data>
+
+  <!-- SettingsPage -->
+  <data name="SettingsTitle" xml:space="preserve"><value>Settings</value></data>
+  <data name="SettingsSubtitle" xml:space="preserve"><value>Application preferences</value></data>
+  <data name="LogFileTypeLabel" xml:space="preserve"><value>Default Log Format</value></data>
+  <data name="BlockingApplicationLabel" xml:space="preserve"><value>Blocking Application</value></data>
+  <data name="BlockingApplicationDescription" xml:space="preserve"><value>No backup can start while this process is running.</value></data>
+  <data name="BlockingAppPlaceholder" xml:space="preserve"><value>e.g. outlook, teams, notepad</value></data>
+  <data name="LogEmplacementTitle" xml:space="preserve"><value>Log file location</value></data>
+
+  <!-- LogsPage -->
+  <data name="NoLogsTitle" xml:space="preserve"><value>No log files yet</value></data>
+  <data name="NoLogsDescription" xml:space="preserve"><value>Log files will appear here after running a backup job.</value></data>
+
+  <!-- ErrorDialog -->
+  <data name="ErrorDialogTitle" xml:space="preserve"><value>An error occurred</value></data>
+  <data name="ErrorDetailsLabel" xml:space="preserve"><value>Technical details</value></data>
+  <data name="CloseButton" xml:space="preserve"><value>Close</value></data>
+
+  <!-- Common -->
+  <data name="CancelButton" xml:space="preserve"><value>Cancel</value></data>
+  <data name="SaveButton" xml:space="preserve"><value>Save</value></data>
+  <data name="PriorityExtensionsLabel" xml:space="preserve">
+      <value>Priority files extensions</value>
+  </data>
+  <data name="LargeFileThresholdLabel" xml:space="preserve">
+      <value>Max parallel size file</value>
+  </data>
+  <data name="PriorityExtensionsDescription" xml:space="preserve">
+      <value>File types to transfer in priority (e.g. .pdf, .png)</value>
+  </data>
+  <data name="LargeFileThresholdDescription" xml:space="preserve">
+      <value>The files with a size superior as this value (Ko) will not be transfer in parallel (0 disable the functionnality)</value>
+  </data>
+</root>

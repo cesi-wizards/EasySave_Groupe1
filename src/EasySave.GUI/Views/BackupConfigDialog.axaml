@@ -3,101 +3,211 @@
         xmlns:vm="using:EasySave.GUI.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="440" d:DesignHeight="520"
+        mc:Ignorable="d" d:DesignWidth="460" d:DesignHeight="580"
         x:Class="EasySave.GUI.Views.BackupConfigDialog"
         x:DataType="vm:BackupConfigDialogViewModel"
-        Title="New Backup Configuration"
-        Width="440"
-        SizeToContent="Height"
-        MinHeight="200"
-        CanResize="False"
-        WindowStartupLocation="CenterOwner">
+        Title="{Binding Localization[BackupConfigTitle]}"
+        Width="460"
+        Height="580"
+        MinHeight="400"
+        CanResize="True"
+        WindowStartupLocation="CenterOwner"
+        Background="White">
 
     <Design.DataContext>
         <vm:BackupConfigDialogViewModel/>
     </Design.DataContext>
 
-    <Grid RowDefinitions="*,Auto" Margin="20">
+    <DockPanel>
 
-        <StackPanel Grid.Row="0" Spacing="12">
+        <!-- Footer -->
+        <Border DockPanel.Dock="Bottom"
+                BorderBrush="#F3F4F6" BorderThickness="0,1,0,0"
+                Padding="24,12,24,20">
+            <Grid ColumnDefinitions="*,8,*">
+                <Button Grid.Column="0" Classes="modal-secondary"
+                        Content="{Binding Localization[CancelButton]}"
+                        Command="{Binding CancelCommand}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Padding="0"/>
+                <Button Grid.Column="2" Classes="modal-primary"
+                        Content="{Binding Localization[CreateButton]}"
+                        Command="{Binding ConfirmCommand}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Padding="0"/>
+            </Grid>
+        </Border>
 
-            <StackPanel Spacing="4">
-                <TextBlock Text="Name"/>
-                <TextBox Text="{Binding Name}" PlaceholderText="Backup name"/>
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Padding="24,20,24,0">
+            <StackPanel Spacing="2">
+                <TextBlock Text="{Binding Localization[BackupConfigTitle]}"
+                           FontSize="17" FontWeight="Bold"
+                           Foreground="#111827"/>
+                <TextBlock Text="{Binding Localization[BackupConfigSubtitle]}"
+                           FontSize="12" Foreground="#9CA3AF"/>
             </StackPanel>
+        </Border>
 
-            <StackPanel Spacing="4">
-                <Button Content="Select the source directory"
-                        Click="SelectFolderButton_Click"
-                        Tag="SourcePath"/>
-                <TextBlock Text="{Binding SourcePath}" TextWrapping="Wrap"/>
-            </StackPanel>
+        <!-- Body -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="14" Margin="24,16,24,24">
 
-            <StackPanel Spacing="4">
-                <Button Content="Select the target directory"
-                        Click="SelectFolderButton_Click"
-                        Tag="TargetPath"/>
-                <TextBlock Text="{Binding TargetPath}" TextWrapping="Wrap"/>
-            </StackPanel>
+                <!-- Name -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="{Binding Localization[NameLabel]}"
+                               FontSize="12" FontWeight="SemiBold" Foreground="#374151"
+                               />
+                    <TextBox Classes="modern"
+                             Text="{Binding Name}"
+                             PlaceholderText="{Binding Localization[BackupNamePlaceholder]}"/>
+                </StackPanel>
 
-            <StackPanel Spacing="4">
-                <TextBlock Text="Backup Type"/>
-                <ComboBox ItemsSource="{Binding BackupTypes}"
-                          SelectedItem="{Binding SelectedType}"
-                          HorizontalAlignment="Stretch"/>
-            </StackPanel>
+                <!-- Source directory -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="{Binding Localization[SourceDirectoryLabel]}"
+                               FontSize="12" FontWeight="SemiBold" Foreground="#374151"/>
+                    <Grid ColumnDefinitions="*,6,Auto">
+                        <TextBox Grid.Column="0" Classes="modern"
+                                 Text="{Binding SourcePath}"
+                                 PlaceholderText="/Users/…"/>
+                        <Button Grid.Column="2"
+                                Content="{Binding Localization[SelectSourceDirectory]}"
+                                Click="SelectFolderButton_Click"
+                                Tag="SourcePath"
+                                Height="36" Padding="12,0" CornerRadius="8"
+                                FontSize="12" FontWeight="Medium"
+                                Background="#F9FAFB"
+                                BorderBrush="#E5E7EB" BorderThickness="1.5"
+                                Foreground="#374151"
+                                VerticalContentAlignment="Center"/>
+                    </Grid>
+                    <TextBlock Text="{Binding SourcePath}"
+                               FontSize="11" Foreground="#9CA3AF"
+                               TextTrimming="CharacterEllipsis"
+                               IsVisible="{Binding SourcePath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                </StackPanel>
 
-            <StackPanel Spacing="4">
-                <TextBlock Text="Encryption Key"/>
-                <TextBox Text="{Binding EncryptKey}"
-                         PlaceholderText="Enter encryption key (leave empty for no encryption)"
-                         PasswordChar="●"/>
-            </StackPanel>
+                <!-- Target directory -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="{Binding Localization[TargetDirectoryLabel]}"
+                               FontSize="12" FontWeight="SemiBold" Foreground="#374151"/>
+                    <Grid ColumnDefinitions="*,6,Auto">
+                        <TextBox Grid.Column="0" Classes="modern"
+                                 Text="{Binding TargetPath}"
+                                 PlaceholderText="/Volumes/…"/>
+                        <Button Grid.Column="2"
+                                Content="{Binding Localization[SelectTargetDirectory]}"
+                                Click="SelectFolderButton_Click"
+                                Tag="TargetPath"
+                                Height="36" Padding="12,0" CornerRadius="8"
+                                FontSize="12" FontWeight="Medium"
+                                Background="#F9FAFB"
+                                BorderBrush="#E5E7EB" BorderThickness="1.5"
+                                Foreground="#374151"
+                                VerticalContentAlignment="Center"/>
+                    </Grid>
+                    <TextBlock Text="{Binding TargetPath}"
+                               FontSize="11" Foreground="#9CA3AF"
+                               TextTrimming="CharacterEllipsis"
+                               IsVisible="{Binding TargetPath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                </StackPanel>
 
-            <StackPanel Spacing="4">
-                <TextBlock Text="Encrypted Extensions"/>
-                <Grid ColumnDefinitions="*,8,Auto">
-                    <TextBox Grid.Column="0"
-                             Text="{Binding ExtensionInput}"
-                             PlaceholderText=".ext"
-                             x:Name="ExtensionInputBox"/>
-                    <Button Grid.Column="2"
-                            Content="Add"
-                            Command="{Binding AddExtensionCommand}"/>
-                </Grid>
-                <ItemsControl ItemsSource="{Binding EncryptedExtensions}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Grid ColumnDefinitions="*,8,Auto" Margin="0,2">
-                                <TextBlock Grid.Column="0"
-                                           Text="{Binding}"
-                                           VerticalAlignment="Center"/>
-                                <Button Grid.Column="2"
-                                        Content="✕"
-                                        Padding="6,2"
-                                        Command="{Binding $parent[ItemsControl].((vm:BackupConfigDialogViewModel)DataContext).RemoveExtensionCommand}"
-                                        CommandParameter="{Binding}"/>
+                <!-- Backup Type + Log Format (side by side) -->
+                <Grid ColumnDefinitions="*,12,*">
+
+                    <!-- Backup Type -->
+                    <StackPanel Grid.Column="0" Spacing="5">
+                        <TextBlock Text="{Binding Localization[BackupTypeLabel]}"
+                                   FontSize="12" FontWeight="SemiBold" Foreground="#374151"/>
+                        <Border Background="#F3F4F6" CornerRadius="8" Padding="2">
+                            <Grid ColumnDefinitions="*,*">
+                                <ToggleButton Grid.Column="0" Classes="segment"
+                                             Content="Full"
+                                             IsChecked="{Binding IsFullBackup}"/>
+                                <ToggleButton Grid.Column="1" Classes="segment"
+                                             Content="Differential"
+                                             IsChecked="{Binding IsDifferentialBackup}"/>
                             </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                        </Border>
+                    </StackPanel>
+
+                </Grid>
+
+                <!-- Encryption Key -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="{Binding Localization[EncryptionKeyLabel]}"
+                               FontSize="12" FontWeight="SemiBold" Foreground="#374151"/>
+                    <TextBlock Text="{Binding Localization[EncryptionKeyHint]}"
+                               FontSize="11" Foreground="#9CA3AF" Margin="0,-2,0,0"/>
+                    <TextBox Classes="modern"
+                             Text="{Binding EncryptKey}"
+                             PlaceholderText="{Binding Localization[EncryptionKeyPlaceholder]}"
+                             PasswordChar="●"/>
+                </StackPanel>
+
+                <!-- Encrypted Extensions -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="{Binding Localization[EncryptedExtensionsLabel]}"
+                               FontSize="12" FontWeight="SemiBold" Foreground="#374151"/>
+                    <TextBlock Text="{Binding Localization[EncryptedExtensionsHint]}"
+                               FontSize="11" Foreground="#9CA3AF" Margin="0,-2,0,0"/>
+                    <Grid ColumnDefinitions="*,6,Auto">
+                        <TextBox Grid.Column="0" Classes="modern"
+                                 Text="{Binding ExtensionInput}"
+                                 PlaceholderText=".ext"/>
+                        <Button Grid.Column="2"
+                                Content="{Binding Localization[AddButton]}"
+                                Command="{Binding AddExtensionCommand}"
+                                Height="36" Padding="14,0" CornerRadius="8"
+                                FontSize="13" FontWeight="SemiBold"
+                                Background="#F3F4F6"
+                                BorderThickness="0"
+                                Foreground="#374151"
+                                VerticalContentAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Extension tags -->
+                    <ItemsControl ItemsSource="{Binding EncryptedExtensions}"
+                                  IsVisible="{Binding EncryptedExtensions.Count}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,4,6,0" CornerRadius="6"
+                                        Background="#F3F4F6"
+                                        BorderBrush="#E5E7EB" BorderThickness="1"
+                                        Padding="8,3">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="{Binding}"
+                                                   FontSize="12" FontWeight="Medium"
+                                                   Foreground="#374151"
+                                                   VerticalAlignment="Center"/>
+                                        <Button Content="×"
+                                                FontSize="13" Foreground="#9CA3AF"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Padding="0"
+                                                VerticalAlignment="Center"
+                                                Command="{Binding $parent[ItemsControl].((vm:BackupConfigDialogViewModel)DataContext).RemoveExtensionCommand}"
+                                                CommandParameter="{Binding}"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
             </StackPanel>
+        </ScrollViewer>
 
-
-        </StackPanel>
-
-        <Grid Grid.Row="1" ColumnDefinitions="*,8,*" Margin="0,16,0,0">
-            <Button Grid.Column="0" Content="Cancel"
-                    Command="{Binding CancelCommand}"
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Center"/>
-            <Button Grid.Column="2" Content="Create"
-                    Command="{Binding ConfirmCommand}"
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Center"
-                    Classes="accent"/>
-        </Grid>
-
-    </Grid>
+    </DockPanel>
 
 </Window>

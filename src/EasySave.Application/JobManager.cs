@@ -1,46 +1,44 @@
+using System.Collections.Concurrent;
+
 using EasySave.Domain.Entities;
 using EasySave.Domain.Interfaces;
-using EasySave.Infrastructure.Factories;
-using EasySave.Infrastructure.Factories.Interfaces;
-using EasySave.Infrastructure.Services;
-using EasySave.Infrastructure.Subscribers;
 
 namespace EasySave.Application;
+
+/// <summary>
+/// Delegate that the Composition Root (CLI/GUI) provides to create the correct
+/// IBackupFactory for a given backup type, without coupling Application to Infrastructure.
+/// </summary>
+public delegate IBackupFactory BackupFactoryBuilder(
+    BackupType type,
+    List<ISubscriber> subscribers,
+    ISoftwareDetector softwareDetector);
 
 public class JobManager
 {
     public List<BackupJob> Jobs { get; private set; } = [];
 
-    private readonly List<string> _businessSoftwares;
     private readonly ISoftwareDetector _softwareDetector;
+    private readonly BackupFactoryBuilder _factoryBuilder;
 
-    public JobManager(List<string>? businessSoftwares = null)
+    private readonly ConcurrentDictionary<string, Lazy<Task>> _runningJobs = new();
+    private readonly ConcurrentDictionary<string, ManualResetEvent> _pauseEvents = new();
+    private readonly TransferGate _transferGate = new();
+
+    public JobManager(ISoftwareDetector softwareDetector, BackupFactoryBuilder factoryBuilder)
     {
-        _businessSoftwares = businessSoftwares ?? [];
-        _softwareDetector = new SoftwareDetector(_businessSoftwares);
+        _softwareDetector = softwareDetector;
+        _factoryBuilder = factoryBuilder;
     }
 
-    public void AddJob(BackupConfig config, ISubscriber? extraSubscriber = null)
+    public void AddJob(BackupConfig config, IEnumerable<ISubscriber> subscribers)
     {
-        ISubscriber stateTracker = new StateTracker();
-        ISubscriber dailyLogger = new DailyLogger(config.LogFileType);
-
-        List<ISubscriber> subscribers = [stateTracker, dailyLogger];
-        if (extraSubscriber is not null)
-            subscribers.Add(extraSubscriber);
-
-        IBackupFactory backupFactory;
-
-        if (config.Type == BackupType.Full)
-        {
-            backupFactory = new FullBackupFactory(subscribers, _softwareDetector);
-        }
-        else
-        {
-            backupFactory = new DifferentialBackupFactory(subscribers, _softwareDetector);
-        }
-        BackupJob jobToAdd = backupFactory.CreateJob(config.Name, config.SourcePath, config.TargetPath, config.TypesToEncrypt, config.EncryptKey);
-        Jobs.Add(jobToAdd);
+        var subscriberList = subscribers.ToList();
+        IBackupFactory factory = _factoryBuilder(config.Type, subscriberList, _softwareDetector);
+        BackupJob job = factory.CreateJob(
+            config.Name, config.SourcePath, config.TargetPath,
+            config.TypesToEncrypt, config.EncryptKey);
+        Jobs.Add(job);
     }
 
     public void RemoveJob(string backupName)
@@ -49,27 +47,63 @@ public class JobManager
         if (jobToRemove != null)
         {
             Jobs.Remove(jobToRemove);
+            _runningJobs.TryRemove(backupName, out _);
         }
     }
 
-    public void SetBusinessSoftwares(IEnumerable<string> businessSoftwares)
-    {
-        _businessSoftwares.Clear();
-        _businessSoftwares.AddRange(businessSoftwares);
-        _softwareDetector.UpdateProcessNames(_businessSoftwares);
-    }
+    public void SetBusinessSoftwares(IEnumerable<string> businessSoftwares) =>
+        _softwareDetector.UpdateProcessNames(businessSoftwares);
 
-    public void ExecuteJob(string name)
+    public void SetPriorityExtensions(IEnumerable<string> extensions) =>
+        _transferGate.SetPriorityExtensions(extensions);
+
+    public void SetLargeFileSizeThreshold(long thresholdKb) =>
+        _transferGate.SetLargeFileSizeThreshold(thresholdKb);
+
+    public Task ExecuteJob(string name)
     {
         BackupJob? job = Jobs.Find(j => j.Name == name);
-        job?.Execute();
+        if (job == null) return Task.CompletedTask;
+
+        var lazy = _runningJobs.GetOrAdd(name, _ => new Lazy<Task>(() =>
+        {
+            var pauseEvent = new ManualResetEvent(true);
+            _pauseEvents[name] = pauseEvent;
+
+            return Task.Run(() =>
+            {
+                try
+                {
+                    job.Execute(pauseEvent, _transferGate);
+                }
+                finally
+                {
+                    _runningJobs.TryRemove(name, out Lazy<Task> _);
+                    ((ICollection<KeyValuePair<string, ManualResetEvent>>)_pauseEvents)
+                        .Remove(new KeyValuePair<string, ManualResetEvent>(name, pauseEvent));
+                    pauseEvent.Dispose();
+                }
+            });
+        }));
+
+        return lazy.Value;
     }
 
-    public void ExecuteJobs()
+    public void PauseJob(string name)
     {
-        foreach (BackupJob job in Jobs)
-        {
-            job.Execute();
-        }
+        if (_pauseEvents.TryGetValue(name, out var pauseEvent))
+            pauseEvent.Reset();
+    }
+
+    public void ResumeJob(string name)
+    {
+        if (_pauseEvents.TryGetValue(name, out var pauseEvent))
+            pauseEvent.Set();
+    }
+
+    public Task ExecuteAllJobs()
+    {
+        var tasks = Jobs.Select(job => ExecuteJob(job.Name));
+        return Task.WhenAll(tasks);
     }
 }

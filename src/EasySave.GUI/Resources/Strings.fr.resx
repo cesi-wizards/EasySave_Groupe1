@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+
+  <!-- Sidebar -->
+  <data name="BackupJobsNav" xml:space="preserve"><value>📋Sauvegardes</value></data>
+  <data name="LogsNav" xml:space="preserve"><value>📔Journaux</value></data>
+  <data name="SettingsButton" xml:space="preserve"><value>⚙️Paramètres</value></data>
+  <data name="DoneLabel" xml:space="preserve"><value>FAIT</value></data>
+  <data name="ActiveLabel" xml:space="preserve"><value>ACTIFS</value></data>
+  <data name="NewBackup" xml:space="preserve"><value>+ Nouvelle sauvegarde</value></data>
+
+  <!-- JobsPage -->
+  <data name="NoJobsTitle" xml:space="preserve"><value>Aucune sauvegarde</value></data>
+  <data name="NoJobsDescription" xml:space="preserve"><value>Créez votre première sauvegarde pour protéger vos données.</value></data>
+  <data name="RunAllJobPointerover" xml:space="preserve"><value>Lancer toutes les sauvegardes</value></data>
+
+  <!-- BackupConfigDialog -->
+  <data name="BackupConfigTitle" xml:space="preserve"><value>Nouvelle sauvegarde</value></data>
+  <data name="BackupConfigSubtitle" xml:space="preserve"><value>Configurer une nouvelle tâche de sauvegarde</value></data>
+  <data name="NameLabel" xml:space="preserve"><value>Nom</value></data>
+  <data name="BackupNamePlaceholder" xml:space="preserve"><value>ex. Sauvegarde quotidienne</value></data>
+  <data name="SourceDirectoryLabel" xml:space="preserve"><value>Répertoire source</value></data>
+  <data name="TargetDirectoryLabel" xml:space="preserve"><value>Répertoire cible</value></data>
+  <data name="SelectSourceDirectory" xml:space="preserve"><value>Sélectionner la source</value></data>
+  <data name="SelectTargetDirectory" xml:space="preserve"><value>Sélectionner la cible</value></data>
+  <data name="BackupTypeLabel" xml:space="preserve"><value>Type de sauvegarde</value></data>
+  <data name="LogFormatLabel" xml:space="preserve"><value>Format de journal</value></data>
+  <data name="EncryptionKeyLabel" xml:space="preserve"><value>Clé de chiffrement</value></data>
+  <data name="EncryptionKeyHint" xml:space="preserve"><value>Laisser vide pour ignorer le chiffrement</value></data>
+  <data name="EncryptionKeyPlaceholder" xml:space="preserve"><value>Entrer une clé pour chiffrer les fichiers…</value></data>
+  <data name="EncryptedExtensionsLabel" xml:space="preserve"><value>Extensions chiffrées</value></data>
+  <data name="EncryptedExtensionsHint" xml:space="preserve"><value>Types de fichiers à chiffrer (ex. .pdf, .docx)</value></data>
+  <data name="AddButton" xml:space="preserve"><value>Ajouter</value></data>
+  <data name="CreateButton" xml:space="preserve"><value>Créer la sauvegarde</value></data>
+  <data name="SelectFolderTitle" xml:space="preserve"><value>Sélectionner un dossier</value></data>
+
+  <!-- SettingsPage -->
+  <data name="SettingsTitle" xml:space="preserve"><value>Paramètres</value></data>
+  <data name="SettingsSubtitle" xml:space="preserve"><value>Préférences de l'application</value></data>
+  <data name="LogFileTypeLabel" xml:space="preserve"><value>Format de journal par défaut</value></data>
+  <data name="BlockingApplicationLabel" xml:space="preserve"><value>Application bloquante</value></data>
+  <data name="BlockingApplicationDescription" xml:space="preserve"><value>Si ce processus est en cours d'exécution, aucune tâche de sauvegarde ne peut être démarrée.</value></data>
+  <data name="BlockingAppPlaceholder" xml:space="preserve"><value>ex. outlook, teams, notepad</value></data>
+  <data name="LogEmplacementTitle" xml:space="preserve"><value>Emplacement du fichier de log</value></data>
+
+  <!-- LogsPage -->
+  <data name="NoLogsTitle" xml:space="preserve"><value>Aucun journal</value></data>
+  <data name="NoLogsDescription" xml:space="preserve"><value>Les journaux apparaîtront ici après l'exécution d'une sauvegarde.</value></data>
+
+  <!-- ErrorDialog -->
+  <data name="ErrorDialogTitle" xml:space="preserve"><value>Une erreur est survenue</value></data>
+  <data name="ErrorDetailsLabel" xml:space="preserve"><value>Détails techniques</value></data>
+  <data name="CloseButton" xml:space="preserve"><value>Fermer</value></data>
+
+  <!-- Common -->
+  <data name="CancelButton" xml:space="preserve"><value>Annuler</value></data>
+  <data name="SaveButton" xml:space="preserve"><value>Enregistrer</value></data>
+  <data name="PriorityExtensionsLabel" xml:space="preserve">
+      <value>Extensions des fichiers prioritaires</value>
+  </data>
+  <data name="LargeFileThresholdLabel" xml:space="preserve">
+      <value>Taille maximale de fichier parallèle</value>
+  </data>
+  <data name="LargeFileThresholdDescription" xml:space="preserve">
+      <value>Les fichiers supérieur à cette taille (Ko) ne serons pas transférer en parallèle (0 désactive la fonctionnalité)</value>
+  </data>
+  <data name="PriorityExtensionsDescription" xml:space="preserve">
+      <value>Types de fichiers à transférer en priorité (ex. .pdf, .png)</value>
+  </data>
+</root>

@@ -20,16 +20,19 @@ public partial class MainWindow : Window
             ((MainWindowViewModel)DataContext!).AddBackupConfig(dialogVm.Result);
     }
 
-    private async void OnSettingsClick(object? sender, RoutedEventArgs _)
+    private void OnSettingsNavClick(object? sender, RoutedEventArgs _)
     {
-        var vm = (MainWindowViewModel)DataContext!;
-        var dialog = new SettingsDialog(vm.BlockingApp, vm.LogFileType);
-        var confirmed = await dialog.ShowDialog<bool>(this);
-
-        if (confirmed && dialog.DataContext is SettingsDialogViewModel settingsVm)
-        {
-            vm.BlockingApp = settingsVm.BlockingApp;
-            vm.LogFileType = settingsVm.SelectedLogFileType;
-        }
+        ((MainWindowViewModel)DataContext!).CurrentPage = MainWindowViewModel.AppPage.Settings;
     }
+
+    private void OnJobsNavClick(object? sender, RoutedEventArgs _)
+    {
+        ((MainWindowViewModel)DataContext!).CurrentPage = MainWindowViewModel.AppPage.Jobs;
+    }
+
+    private void OnLogsNavClick(object? sender, RoutedEventArgs _)
+    {
+        ((MainWindowViewModel)DataContext!).CurrentPage = MainWindowViewModel.AppPage.Logs;
+    }
+
 }

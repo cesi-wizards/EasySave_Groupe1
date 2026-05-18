@@ -1,0 +1,74 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:EasySave.GUI.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:DataType="vm:LogsPageViewModel"
+             x:Class="EasySave.GUI.Views.LogsPage">
+
+    <Panel>
+
+        <!-- Empty state -->
+        <StackPanel IsVisible="{Binding HasNoFiles}"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Spacing="6">
+            <TextBlock Text="{Binding Localization[NoLogsTitle]}"
+                       FontSize="15" FontWeight="SemiBold"
+                       Foreground="{StaticResource TextPrimary}"
+                       HorizontalAlignment="Center"/>
+            <TextBlock Text="{Binding Localization[NoLogsDescription]}"
+                       FontSize="13"
+                       Foreground="{StaticResource TextMuted}"
+                       HorizontalAlignment="Center"
+                       TextAlignment="Center"
+                       MaxWidth="240"
+                       TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <!-- File list -->
+        <ScrollViewer IsVisible="{Binding HasFiles}"
+                      VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Files}" Margin="12,0,12,12">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:LogFileItem">
+                        <Button Background="Transparent"
+                                BorderThickness="0"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch"
+                                Padding="0"
+                                Command="{Binding $parent[ItemsControl].((vm:LogsPageViewModel)DataContext).OpenFileCommand}"
+                                CommandParameter="{Binding}">
+                            <Border Margin="0,0,0,2" CornerRadius="10"
+                                    Padding="14,10" Background="Transparent">
+                                <Border.Styles>
+                                    <Style Selector="Border:pointerover">
+                                        <Setter Property="Background" Value="#05000000"/>
+                                    </Style>
+                                </Border.Styles>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" Spacing="2">
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimary}"/>
+                                        <TextBlock Text="{Binding Date}"
+                                                   FontSize="11"
+                                                   Foreground="{StaticResource TextMuted}"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Size}"
+                                               FontSize="12"
+                                               Foreground="{StaticResource TextMuted}"
+                                               VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+    </Panel>
+
+</UserControl>

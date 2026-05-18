@@ -2,14 +2,207 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="EasySave.GUI.App"
              xmlns:local="using:EasySave.GUI"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+             xmlns:views="clr-namespace:EasySave.GUI.Views"
+             xmlns:viewModels="clr-namespace:EasySave.GUI.ViewModels"
+             RequestedThemeVariant="Light">
+
+    <!--<Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>-->
 
     <Application.DataTemplates>
-        <local:ViewLocator/>
+        <DataTemplate DataType="viewModels:JobsPageViewModel">
+            <views:JobsPage/>
+        </DataTemplate>
+        <DataTemplate DataType="viewModels:LogsPageViewModel">
+            <views:LogsPage/>
+        </DataTemplate>
     </Application.DataTemplates>
-  
+
+
     <Application.Styles>
         <FluentTheme />
+
+        <!-- ── Sidebar nav button ───────────────────────────────────────────── -->
+        <Style Selector="Button.nav">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,0,10,0"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#6B7280"/>
+        </Style>
+        <Style Selector="Button.nav:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#0A000000"/>
+        </Style>
+        <Style Selector="Button.nav:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#14000000"/>
+        </Style>
+
+        <!-- ── CTA button (New Backup in sidebar) ───────────────────────────── -->
+        <Style Selector="Button.cta">
+            <Setter Property="Background" Value="#3B6AF7"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="Button.cta:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#003ef8"></Setter>
+            <Setter Property="Foreground" Value="White"></Setter>
+        </Style>
+
+        <!-- ── Icon button (toolbar settings, run, delete) ──────────────────── -->
+        <Style Selector="Button.icon">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#E5E7EB"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Width" Value="34"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#6B7280"/>
+        </Style>
+        <Style Selector="Button.icon:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#F3F4F6"/>
+        </Style>
+
+        <!-- ── Run button ────────────────────────────────────────────────────── -->
+        <Style Selector="Button.run">
+            <Setter Property="Background" Value="#1A3B6AF7"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="34"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#3B6AF7"/>
+        </Style>
+        <Style Selector="Button.run:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#2A3B6AF7"/>
+        </Style>
+
+        <!-- ── Delete button ─────────────────────────────────────────────────── -->
+        <Style Selector="Button.delete">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="34"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#D1D5DB"/>
+        </Style>
+        <Style Selector="Button.delete:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#14EF4444"/>
+        </Style>
+        <Style Selector="Button.delete:pointerover">
+            <Setter Property="Foreground" Value="#DC2626"/>
+        </Style>
+
+        <!-- ── Segment toggle button ─────────────────────────────────────────── -->
+        <Style Selector="ToggleButton.segment">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0,6"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#9CA3AF"/>
+        </Style>
+        <Style Selector="ToggleButton.segment:checked /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="TextElement.Foreground" Value="#111827"/>
+            <Setter Property="TextElement.FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="ToggleButton.segment:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#0A000000"/>
+        </Style>
+        <Style Selector="ToggleButton.segment:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="White"/>
+        </Style>
+
+        <!-- ── Modal dialog button (secondary) ───────────────────────────────── -->
+        <Style Selector="Button.modal-secondary">
+            <Setter Property="Background" Value="#F3F4F6"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="0,0,18,0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#374151"/>
+        </Style>
+        <Style Selector="Button.modal-secondary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#E5E7EB"/>
+        </Style>
+
+        <!-- ── Modal dialog button (primary) ─────────────────────────────────── -->
+        <Style Selector="Button.modal-primary">
+            <Setter Property="Background" Value="#3B6AF7"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="0,0,18,0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="Button.modal-primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#003ef8"></Setter>
+            <Setter Property="Foreground" Value="White"></Setter>
+        </Style>
+        <Style Selector="Button.modal-primary:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#9CA3AF"/>
+        </Style>
+
+        <!-- ── Modern TextBox ─────────────────────────────────────────────────── -->
+        <Style Selector="TextBox.modern">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E5E7EB"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="TextBox.modern:focus /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="#3B6AF7"/>
+        </Style>
+        <!-- Fix: FluentTheme validation error state collapses the top border -->
+        <Style Selector="TextBox.modern:error /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="#EF4444"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Margin" Value="0,0, 0, 12"/>
+        </Style>
+
     </Application.Styles>
+
+    <Application.Resources>
+        <SolidColorBrush x:Key="AccentBrush" Color="#3B6AF7"/>
+        <SolidColorBrush x:Key="SidebarBrush" Color="#EEF3FC"/>
+        <SolidColorBrush x:Key="SidebarBorderBrush" Color="#D8E3F2"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#111827"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#6B7280"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#9CA3AF"/>
+        <SolidColorBrush x:Key="SurfaceBrush" Color="#F9FAFB"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#E5E7EB"/>
+    </Application.Resources>
+
 </Application>

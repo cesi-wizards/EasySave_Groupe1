@@ -1,7 +1,7 @@
 <Solution>
-    <Configurations>
-        <Platform Name="Any CPU" />
-    </Configurations>
+    <Folder Name="/Solution Items/">
+        <File Path="compose.yaml" />
+    </Folder>
 
     <Folder Name="/src/">
         <Project Path="src/EasyLog/EasyLog.csproj" />
@@ -10,6 +10,7 @@
         <Project Path="src/EasySave.Application/EasySave.Application.csproj" />
         <Project Path="src/EasySave.CLI/EasySave.CLI.csproj" />
         <Project Path="src/EasySave.GUI/EasySave.GUI.csproj" />
+        <Project Path="src/EasyServer/EasyServer.csproj" />
     </Folder>
 
 </Solution>
