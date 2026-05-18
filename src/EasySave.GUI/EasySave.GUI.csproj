@@ -24,6 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\EasySave.Domain\EasySave.Domain.csproj" />
     <ProjectReference Include="..\EasySave.Application\EasySave.Application.csproj" />
+    <ProjectReference Include="..\EasySave.Infrastructure\EasySave.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

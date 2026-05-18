@@ -8,6 +8,5 @@
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\..\src\EasySave.Domain\EasySave.Domain.csproj" />
-        <ProjectReference Include="..\..\src\EasySave.Infrastructure\EasySave.Infrastructure.csproj" />
     </ItemGroup>
 </Project>
