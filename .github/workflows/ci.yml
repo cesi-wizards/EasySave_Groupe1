@@ -89,6 +89,18 @@ jobs:
             -o dist/cli-osx-arm64
           tar -czf dist/EasySave-osx-arm64.tar.gz -C dist/cli-osx-arm64 .
 
+      # ── Génération de l'icône macOS (.icns) ──────────────────────────────────
+      - name: Generate AppIcon.icns
+        run: |
+          sudo apt-get install -y librsvg2-bin icnsutils
+          mkdir -p /tmp/AppIcon.iconset
+          for size in 16 32 48 128 256 512; do
+            rsvg-convert -w $size -h $size \
+              src/EasySave.GUI/Assets/EasySave-logo.svg \
+              -o /tmp/AppIcon.iconset/icon_${size}x${size}.png
+          done
+          png2icns /tmp/AppIcon.icns /tmp/AppIcon.iconset/*.png
+
       # ── Build GUI pour chaque plateforme ─────────────────────────────────────
       - name: Publish GUI — Windows x64
         run: |
@@ -130,9 +142,11 @@ jobs:
             -o dist/gui-osx-x64
           mkdir -p dist/EasySave-osx-x64.app/Contents/MacOS
           mkdir -p dist/EasySave-osx-x64.app/Contents/Resources
-          cp dist/gui-osx-x64/EasySave.GUI dist/EasySave-osx-x64.app/Contents/MacOS/EasySave
-          sed 's/2\.0\.0/${{ steps.version.outputs.value }}/g' \
+          cp -r dist/gui-osx-x64/. dist/EasySave-osx-x64.app/Contents/MacOS/
+          mv dist/EasySave-osx-x64.app/Contents/MacOS/EasySave.GUI dist/EasySave-osx-x64.app/Contents/MacOS/EasySave
+          sed 's/__VERSION__/${{ steps.version.outputs.value }}/g' \
             src/EasySave.GUI/Info.plist > dist/EasySave-osx-x64.app/Contents/Info.plist
+          cp /tmp/AppIcon.icns dist/EasySave-osx-x64.app/Contents/Resources/AppIcon.icns
           chmod +x dist/EasySave-osx-x64.app/Contents/MacOS/EasySave
           tar -czf dist/EasySave-GUI-osx-x64.tar.gz -C dist EasySave-osx-x64.app
 
@@ -144,9 +158,11 @@ jobs:
             -o dist/gui-osx-arm64
           mkdir -p dist/EasySave-osx-arm64.app/Contents/MacOS
           mkdir -p dist/EasySave-osx-arm64.app/Contents/Resources
-          cp dist/gui-osx-arm64/EasySave.GUI dist/EasySave-osx-arm64.app/Contents/MacOS/EasySave
-          sed 's/2\.0\.0/${{ steps.version.outputs.value }}/g' \
+          cp -r dist/gui-osx-arm64/. dist/EasySave-osx-arm64.app/Contents/MacOS/
+          mv dist/EasySave-osx-arm64.app/Contents/MacOS/EasySave.GUI dist/EasySave-osx-arm64.app/Contents/MacOS/EasySave
+          sed 's/__VERSION__/${{ steps.version.outputs.value }}/g' \
             src/EasySave.GUI/Info.plist > dist/EasySave-osx-arm64.app/Contents/Info.plist
+          cp /tmp/AppIcon.icns dist/EasySave-osx-arm64.app/Contents/Resources/AppIcon.icns
           chmod +x dist/EasySave-osx-arm64.app/Contents/MacOS/EasySave
           tar -czf dist/EasySave-GUI-osx-arm64.tar.gz -C dist EasySave-osx-arm64.app
 
