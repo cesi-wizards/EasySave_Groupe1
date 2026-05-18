@@ -85,18 +85,6 @@ jobs:
             -o dist/cli-osx-arm64
           tar -czf dist/EasySave-osx-arm64.tar.gz -C dist/cli-osx-arm64 .
 
-      # ── Génération de l'icône macOS (.icns) ──────────────────────────────────
-      - name: Generate AppIcon.icns
-        run: |
-          sudo apt-get install -y librsvg2-bin icnsutils
-          mkdir -p /tmp/AppIcon.iconset
-          for size in 16 32 48 128 256 512; do
-            rsvg-convert -w $size -h $size \
-              src/EasySave.GUI/Assets/EasySave-logo.svg \
-              -o /tmp/AppIcon.iconset/icon_${size}x${size}.png
-          done
-          png2icns /tmp/AppIcon.icns /tmp/AppIcon.iconset/*.png
-
       # ── Build GUI pour chaque plateforme ─────────────────────────────────────
       - name: Publish GUI — Windows x64
         run: |
@@ -173,6 +161,22 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+
+      # ── Génération de l'icône macOS (.icns) ──────────────────────────────────
+      - name: Generate AppIcon.icns
+        run: |
+          brew install librsvg
+          mkdir -p /tmp/AppIcon.iconset
+          for size in 16 32 128 256 512; do
+            rsvg-convert -w $size -h $size \
+              src/EasySave.GUI/Assets/EasySave-logo.svg \
+              -o /tmp/AppIcon.iconset/icon_${size}x${size}.png
+            double=$((size * 2))
+            rsvg-convert -w $double -h $double \
+              src/EasySave.GUI/Assets/EasySave-logo.svg \
+              -o "/tmp/AppIcon.iconset/icon_${size}x${size}@2x.png"
+          done
+          iconutil --convert icns --output /tmp/AppIcon.icns /tmp/AppIcon.iconset
 
       - name: Publish CLI — macOS x64
         run: |
