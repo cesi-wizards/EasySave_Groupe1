@@ -2,6 +2,10 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using EasySave.Application;
 using EasySave.Domain.Entities;
+using EasySave.Domain.Interfaces;
+using EasySave.Infrastructure.Factories;
+using EasySave.Infrastructure.Services;
+using EasySave.Infrastructure.Subscribers;
 
 namespace EasySave.CLI;
 
@@ -26,7 +30,9 @@ public static class Program
 
         int[] jobIndices = ParseJobIndices(args[0]);
 
-        var jobManager = new JobManager(config.BusinessSoftwares);
+        // --- Composition Root ---
+        var softwareDetector = new SoftwareDetector(config.BusinessSoftwares);
+        var jobManager = new JobManager(softwareDetector, BuildFactory);
         jobManager.SetPriorityExtensions(config.PriorityExtensions);
         jobManager.SetLargeFileSizeThreshold(config.LargeFileSizeThresholdKb);
 
@@ -34,11 +40,23 @@ public static class Program
         {
             BackupConfig job = config.Jobs[index - 1];
             job.LogFileType = config.LogFileType;
-            jobManager.AddJob(job);
+
+            ISubscriber[] subscribers =
+            [
+                new StateTracker(),
+                new DailyLogger(job.LogFileType, "local"),
+            ];
+            jobManager.AddJob(job, subscribers);
         }
 
         jobManager.ExecuteAllJobs().Wait();
     }
+
+    private static IBackupFactory BuildFactory(
+        BackupType type, List<ISubscriber> subscribers, ISoftwareDetector detector) =>
+        type == BackupType.Full
+            ? new FullBackupFactory(subscribers, detector)
+            : new DifferentialBackupFactory(subscribers, detector);
 
     private static int[] ParseJobIndices(string arg)
     {

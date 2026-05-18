@@ -1,7 +1,6 @@
 using EasySave.Domain.Entities;
 using EasySave.Domain.Interfaces;
 using EasySave.Domain.Strategies;
-using EasySave.Infrastructure.Factories.Interfaces;
 
 namespace EasySave.Infrastructure.Factories;
 

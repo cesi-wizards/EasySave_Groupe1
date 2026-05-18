@@ -7,7 +7,7 @@ namespace EasySave.GUI.ViewModels;
 public partial class LogsPageViewModel : ViewModelBase
 {
     private static readonly string LogsFolder =
-        Path.Combine(Directory.GetCurrentDirectory(), "Logs");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "EasySave", "Logs");
 
     public ObservableCollection<LogFileItem> Files { get; } = [];
 

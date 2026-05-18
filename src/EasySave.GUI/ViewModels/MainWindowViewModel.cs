@@ -1,12 +1,19 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using EasySave.Application;
 using EasySave.Domain.Entities;
-using JobManager = EasySave.Application.JobManager;
+using EasySave.Domain.Interfaces;
+using EasySave.Infrastructure.Factories;
+using EasySave.Infrastructure.Services;
 
 namespace EasySave.GUI.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
-    private readonly JobManager _jobManager = new();
+    private readonly JobManager _jobManager = new(
+        new SoftwareDetector([]),
+        (type, subs, det) => type == BackupType.Full
+            ? (IBackupFactory)new FullBackupFactory(subs, det)
+            : new DifferentialBackupFactory(subs, det));
 
     public AppSettings Settings { get; }
     public JobsPageViewModel JobsPageVm { get; }

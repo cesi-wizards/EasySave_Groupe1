@@ -3,7 +3,9 @@ using System.Collections.Specialized;
 using CommunityToolkit.Mvvm.Input;
 using EasySave.Application;
 using EasySave.Domain.Entities;
+using EasySave.Domain.Interfaces;
 using EasySave.GUI;
+using EasySave.Infrastructure.Subscribers;
 
 namespace EasySave.GUI.ViewModels;
 
@@ -57,7 +59,14 @@ public partial class JobsPageViewModel : ViewModelBase
         config.LogFileType = _settings.LogFileType;
         var jobVm = new BackupJobViewModel(config);
         BackupJobs.Add(jobVm);
-        _jobManager.AddJob(config, jobVm);
+
+        ISubscriber[] subscribers =
+        [
+            new StateTracker(),
+            new DailyLogger(config.LogFileType, _settings.LogEmplacement),
+            jobVm,
+        ];
+        _jobManager.AddJob(config, subscribers);
     }
 
     [RelayCommand(AllowConcurrentExecutions = true)]
@@ -89,7 +98,7 @@ public partial class JobsPageViewModel : ViewModelBase
             await _jobManager.ExecuteJob(jobVm.Config.Name);
             jobVm.Status = JobStatus.Idle;
         }
-        catch (FileNotFoundException ex)
+        catch (Exception ex) when (ex is IOException or FileNotFoundException)
         {
             jobVm.Status = JobStatus.Error;
             App.ShowErrorDialog(ex);

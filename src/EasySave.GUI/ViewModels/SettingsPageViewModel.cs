@@ -32,7 +32,6 @@ public partial class SettingsPageViewModel : ViewModelBase
                     OnPropertyChanged(nameof(IsServerLog));
                     OnPropertyChanged(nameof(IsServerAndLocalLog));
                     OnPropertyChanged(nameof(IsServerMode));
-                    _jobManager.SetLogEmplacement(settings.LogEmplacement);
                     break;
                 case nameof(AppSettings.BlockingApp):
                     OnPropertyChanged(nameof(BlockingApp));
