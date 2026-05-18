@@ -15,7 +15,8 @@ public class StateTracker : ISubscriber
         string folderName = "Logs";
         string fileName = "states.json";
 
-        return Path.Combine(Directory.GetCurrentDirectory(), folderName, fileName);
+        string appData = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        return Path.Combine(appData, "EasySave", folderName, fileName);
     }
 
     public void Update(IBackupEvent backupEvent)
