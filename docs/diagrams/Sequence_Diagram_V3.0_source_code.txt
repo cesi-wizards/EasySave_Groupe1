@@ -1,0 +1,239 @@
+@startuml
+scale max 3000 width
+
+autonumber
+
+skinparam BoxPadding 15
+skinparam ParticipantPadding 15
+skinparam NoteBackgroundColor #FAFAFA
+skinparam NoteBorderColor #DDDDDD
+
+actor User
+
+box "Presentation Layer (GUI - MVVM)" #LightBlue
+participant Program
+participant App
+participant MainWindow
+participant MainViewModel
+participant ErrorDialog
+end box
+
+box "Business Layer (EasySave Core)" #LightYellow
+participant JobManager
+participant "Full/Differential\nBackupFactory" as Factory
+participant BackupJob
+participant "Full/Differential\nBackupStrategy" as Strategy
+participant SoftwareDetector
+participant CryptoSoftService
+end box
+
+box "Subscribers & Logs (Infrastructure)" #LightPink
+participant StateTracker
+participant DailyLogger
+participant "EasyLog (Instance)" as EasyLog
+participant JsonLogger
+participant JsonDistantLogger
+participant LogServer
+end box
+
+== Application Initialization & Startup ==
+
+[-> Program : Main(args)
+activate Program
+
+Program -> App : BuildAvaloniaApp()
+activate App
+deactivate App
+
+Program -> App : StartWithClassicDesktopLifetime(args)
+activate App
+
+    App -> App : Initialize()
+    note over App : Loads user interfaces\nvia AvaloniaXamlLoader
+
+    App -> App : OnFrameworkInitializationCompleted()
+    activate App
+        App -> MainWindow : new MainWindow()
+        activate MainWindow
+        MainWindow --> App : mainWindowInstance
+        
+        App -> MainViewModel : new MainViewModel(configFilePath, jobsToExecute)
+        activate MainViewModel
+        MainViewModel --> App : mainViewModelInstance
+        
+        App -> MainWindow : Set DataContext = mainViewModelInstance
+        
+        App -> App : RegisterGlobalExceptionHandlers()
+        note over App : Subscribes to Dispatcher, AppDomain,\nand TaskScheduler events to intercept global crashes
+    deactivate App
+    
+    MainWindow --> User : Renders Graphical User Interface (GUI)
+deactivate App
+deactivate Program
+
+== Backup Job Execution ==
+
+User -> MainWindow : Clicks "Run All" button
+activate MainWindow
+
+MainWindow -> MainViewModel : Execute()
+activate MainViewModel
+
+MainViewModel -> MainViewModel : CreateBackupConfig()
+note over MainViewModel : Deserializes global configuration\nand loads requested BackupConfigs
+
+loop For each BackupConfig loaded in _configs
+    MainViewModel -> JobManager : AddJob(config)
+    activate JobManager
+        note over JobManager
+            Creates subscriber instances:
+            - stateTracker = new StateTracker()
+            - dailyLogger = new DailyLogger(config.LogFileType)
+        end note
+        
+        JobManager -> Factory : CreateJob(name, src, target, types, key)
+        activate Factory
+            Factory -> Strategy : new ConcreteStrategy(CryptoSoftService, SoftwareDetector)
+            activate Strategy
+            deactivate Strategy
+            
+            Factory -> Factory : WireSubscribers(strategy)
+            note over Factory : Loops through subscribers and calls\nstrategy.Attach(subscriber)
+            
+            Factory -> BackupJob : new BackupJob(..., strategy, ...)
+            activate BackupJob
+            BackupJob --> Factory : jobInstance
+            deactivate BackupJob
+            
+            Factory --> JobManager : jobInstance
+        deactivate Factory
+        JobManager --> MainViewModel : Job added to list
+    deactivate JobManager
+end
+
+MainViewModel -> JobManager : ExecuteAllJobs()
+activate JobManager
+
+loop For each job in Jobs list
+    JobManager -> JobManager : ExecuteJob(job.Name)
+    activate JobManager
+        note over JobManager
+            Initializes ManualResetEvent (pauseEvent).
+            Asynchronous execution via Task.Run().
+        end note
+        JobManager -> BackupJob : Execute(pauseEvent)
+        activate BackupJob
+        deactivate JobManager
+end
+deactivate MainViewModel
+
+' --- STRATEGY EXECUTION BLOCK (RUNNING IN THE TASK THREAD) ---
+BackupJob -> Strategy : Execute(Name, Source, Target, TypesToEncrypt, EncryptKey, pauseEvent)
+activate Strategy
+
+Strategy -> Strategy : GetBackupFiles(sourcePath, targetPath)
+note over Strategy : Identifies files to copy\n(All for Full, based on LastWriteTime for Differential)
+
+loop For each identified local file
+    Strategy -> SoftwareDetector : IsSoftwareRunning()
+    activate SoftwareDetector
+    SoftwareDetector --> Strategy : businessSoftwareActive (bool)
+    deactivate SoftwareDetector
+    
+    alt If a business software blocks execution
+        Strategy -> Strategy : interrupted = true; break;
+    end
+    
+    ' --- STEP 1: SEND READY EVENT (STATE TRACKER) ---
+    Strategy -> Strategy : Notify(new FileTransferReady(...))
+    Strategy -> StateTracker : Update(fileTransferReadyEvent)
+    activate StateTracker
+        StateTracker -> StateTracker : WriteToFile(Serialize(..., ActiveSaveStateEnum.ACTIVE))
+        note over StateTracker : State tracking persistence (direct synchronous write)
+    deactivate StateTracker
+    
+    Strategy -> Strategy : CopyFile(sourceFile, targetFile)
+    note over Strategy : Computes real-time transfer duration (transferTime)
+    
+    opt If target file extension matches TypesToEncrypt
+        Strategy -> CryptoSoftService : Encrypt(targetFile, encryptKey)
+        activate CryptoSoftService
+        CryptoSoftService --> Strategy : encryptTime (TimeSpan from ExitCode)
+        deactivate CryptoSoftService
+    end
+
+    ' --- STEP 2: TRANSFER SUCCESS (UPDATES PROGRESS AND DAILY LOG) ---
+    Strategy -> Strategy : Notify(new FileTransferSuccess(...))
+    
+    Strategy -> StateTracker : Update(fileTransferSuccessEvent)
+    activate StateTracker
+        StateTracker -> StateTracker : WriteToFile(Serialize(...))
+        note over StateTracker : Updates remaining global progress in states.json
+    deactivate StateTracker
+    
+    Strategy -> DailyLogger : Update(fileTransferSuccessEvent)
+    activate DailyLogger
+        DailyLogger -> DailyLogger : Serialize(meta, file, transferTime, encryptTime, null)
+        DailyLogger -> EasyLog : Write(filePath, content, "json", serverName, serverPort)
+        activate EasyLog
+            note over EasyLog : _writeSemaphore.Wait()\nDetects destination (local/server)
+
+            opt If remote logging is active
+                EasyLog -> JsonDistantLogger : SendToRemoteServerAsync(content) [via Task.Run]
+                activate JsonDistantLogger
+                    JsonDistantLogger -> LogServer : Sends JSON payload (Header + Data)
+                    activate LogServer
+                    LogServer --> JsonDistantLogger : TCP Response ("OK")
+                    deactivate LogServer
+                JsonDistantLogger --> EasyLog : Task completed
+                deactivate JsonDistantLogger
+            end
+
+            opt If local logging is active
+                EasyLog -> JsonLogger : Write(content)
+                activate JsonLogger
+                    note over JsonLogger : Synchronous lock block lock(_lock)
+                    JsonLogger -> JsonLogger : File.AppendAllText(logPath, jsonLine)
+                    JsonLogger --> EasyLog
+                deactivate JsonLogger
+            end
+            EasyLog --> DailyLogger : Write completed
+        deactivate EasyLog
+        DailyLogger --> Strategy
+    deactivate DailyLogger
+end
+
+' --- STEP 3: STRATEGY END ---
+alt If no business software obstruction occurred
+    Strategy -> Strategy : Notify(new BackupCompleted(...))
+    Strategy -> StateTracker : Update(backupCompletedEvent)
+    activate StateTracker
+        note over StateTracker : Flips job final state to (INACTIVE) in states.json
+    deactivate StateTracker
+end
+
+Strategy --> BackupJob : End of strategy execution
+deactivate Strategy
+deactivate BackupJob
+
+JobManager --> MainWindow : UI Unlocked (Once all tasks have completed)
+deactivate JobManager
+
+== Global Exception Handling (Asynchronous / At any time) ==
+
+note over App : Triggered automatically if an unhandled exception\noccurs on the UI thread, thread pool, or inside a Task.
+
+[-> App : Dispatcher.UIThread.UnhandledException / UnhandledException / UnobservedTaskException
+activate App
+    App -> App : ShowErrorDialog(ex)
+    activate App
+        App -> ErrorDialog : new ErrorDialog(ex)
+        activate ErrorDialog
+        ErrorDialog --> App : errorDialogInstance
+        App -> ErrorDialog : ShowDialog(MainWindow)
+        ErrorDialog --> User : Displays a dialog box with error details
+        deactivate ErrorDialog
+    deactivate App
+deactivate App
+
+@enduml
