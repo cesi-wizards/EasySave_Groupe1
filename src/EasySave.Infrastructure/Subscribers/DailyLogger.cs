@@ -22,7 +22,8 @@ public class DailyLogger : ISubscriber
         string folderName = "Logs";
         string fileName = $"{DateTime.Now:yyyy-MM-dd}";
 
-        return Path.Combine(Directory.GetCurrentDirectory(), folderName, fileName);
+        string appData = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        return Path.Combine(appData, "EasySave", folderName, fileName);
     }
 
     public void Update(IBackupEvent backupEvent)
