@@ -7,7 +7,7 @@ namespace EasySave.Infrastructure.Services;
 public class CryptoSoftService : IEncryptionService
 {
     private static readonly string _cryptoSoftExecutableName =
-        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "CryptoSoft.exe" : "CryptoSoft";
+        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "CryptoSoft.exe" : "/usr/local/bin/CryptoSoft";
 
     public TimeSpan Encrypt(string filePath, string key)
     {
