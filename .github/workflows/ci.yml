@@ -6,12 +6,10 @@ on:
       - main
 
 jobs:
-  release:
-    name: Build & Publish
+  # ── Linux & Windows ──────────────────────────────────────────────────────────
+  build-linux-windows:
+    name: Build Linux & Windows
     runs-on: ubuntu-latest
-    permissions:
-      contents: write   # créer la GitHub Release
-      packages: write   # publier sur GitHub Packages
 
     steps:
       - name: Checkout
@@ -19,20 +17,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      # ── Version ──────────────────────────────────────────────────────────────
-      - name: Extract version from Directory.Build.props
+      - name: Extract version
         id: version
         run: |
           VERSION=$(grep -oPm1 '(?<=<Version>)[^<]+' Directory.Build.props || echo "1.0.0")
           echo "value=$VERSION" >> $GITHUB_OUTPUT
 
-      # ── .NET ─────────────────────────────────────────────────────────────────
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
 
-      # ── Build CLI pour chaque plateforme ─────────────────────────────────────
+      # ── CLI ────────────────────────────────────────────────────────────────
       - name: Publish CLI — Windows x64
         run: |
           dotnet publish src/EasySave.CLI/EasySave.CLI.csproj \
@@ -134,6 +130,66 @@ jobs:
             -o dist/gui-linux-arm64
           tar -czf dist/EasySave-GUI-linux-arm64.tar.gz -C dist/gui-linux-arm64 EasySave.GUI
 
+      # ── EasyLog DLL + NuGet ────────────────────────────────────────────────
+      - name: Publish DLL — Portable
+        run: |
+          dotnet build src/EasyLog/EasyLog.csproj \
+            -c Release \
+            -p:Version=${{ steps.version.outputs.value }} \
+            -o dist/dll
+          zip -j dist/EasyLog-dll.zip dist/dll/EasyLog.dll
+
+      - name: Pack EasyLog
+        run: |
+          dotnet pack src/EasyLog/EasyLog.csproj \
+            -c Release \
+            -p:Version=${{ steps.version.outputs.value }} \
+            -o dist/nuget
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-linux-windows
+          path: dist/
+
+  # ── macOS ────────────────────────────────────────────────────────────────────
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' Directory.Build.props | tr -d ' \t')
+          echo "value=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish CLI — macOS x64
+        run: |
+          dotnet publish src/EasySave.CLI/EasySave.CLI.csproj \
+            -c Release -r osx-x64 --self-contained true \
+            -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }} \
+            -o dist/cli-osx-x64
+          tar -czf dist/EasySave-osx-x64.tar.gz -C dist/cli-osx-x64 .
+
+      - name: Publish CLI — macOS ARM64
+        run: |
+          dotnet publish src/EasySave.CLI/EasySave.CLI.csproj \
+            -c Release -r osx-arm64 --self-contained true \
+            -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }} \
+            -o dist/cli-osx-arm64
+          tar -czf dist/EasySave-osx-arm64.tar.gz -C dist/cli-osx-arm64 .
+
       - name: Publish GUI — macOS x64 (.app bundle)
         run: |
           dotnet publish src/EasySave.GUI/EasySave.GUI.csproj \
@@ -148,6 +204,7 @@ jobs:
             src/EasySave.GUI/Info.plist > dist/EasySave-osx-x64.app/Contents/Info.plist
           cp /tmp/AppIcon.icns dist/EasySave-osx-x64.app/Contents/Resources/AppIcon.icns
           chmod +x dist/EasySave-osx-x64.app/Contents/MacOS/EasySave
+          codesign --force --deep --sign - dist/EasySave-osx-x64.app
           tar -czf dist/EasySave-GUI-osx-x64.tar.gz -C dist EasySave-osx-x64.app
 
       - name: Publish GUI — macOS ARM64 (.app bundle)
@@ -164,23 +221,50 @@ jobs:
             src/EasySave.GUI/Info.plist > dist/EasySave-osx-arm64.app/Contents/Info.plist
           cp /tmp/AppIcon.icns dist/EasySave-osx-arm64.app/Contents/Resources/AppIcon.icns
           chmod +x dist/EasySave-osx-arm64.app/Contents/MacOS/EasySave
+          codesign --force --deep --sign - dist/EasySave-osx-arm64.app
           tar -czf dist/EasySave-GUI-osx-arm64.tar.gz -C dist EasySave-osx-arm64.app
 
-      # ── EasyLog DLL + NuGet ───────────────────────────────────────────────────
-      - name: Publish DLL — Portable
-        run: |
-          dotnet build src/EasyLog/EasyLog.csproj \
-            -c Release \
-            -p:Version=${{ steps.version.outputs.value }} \
-            -o dist/dll
-          zip -j dist/EasyLog-dll.zip dist/dll/EasyLog.dll
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-macos
+          path: dist/
 
-      - name: Pack EasyLog
+  # ── GitHub Release ────────────────────────────────────────────────────────────
+  release:
+    name: Create Release
+    needs: [build-linux-windows, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
         run: |
-          dotnet pack src/EasyLog/EasyLog.csproj \
-            -c Release \
-            -p:Version=${{ steps.version.outputs.value }} \
-            -o dist/nuget
+          VERSION=$(grep -oPm1 '(?<=<Version>)[^<]+' Directory.Build.props || echo "1.0.0")
+          echo "value=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Download Linux & Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts-linux-windows
+          path: dist/
+
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts-macos
+          path: dist/
 
       - name: Push to GitHub Packages
         run: |
@@ -194,7 +278,6 @@ jobs:
             --source github \
             --skip-duplicate
 
-      # ── GitHub Release ────────────────────────────────────────────────────────
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
